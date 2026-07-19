@@ -1,0 +1,205 @@
+====================================================
+DEVELOPMENT STRATEGY
+====================================================
+
+Think like a Senior Software Architect before writing any code.
+
+Do NOT rush into coding.
+
+First analyze the requirements.
+
+Design the architecture.
+
+Design the database.
+
+Design the folder structure.
+
+Design the APIs.
+
+Then begin implementation.
+
+Never generate placeholder demo code unless explicitly requested.
+
+====================================================
+CODING RULES
+====================================================
+
+Write production-quality code only.
+
+No duplicated code.
+
+Use reusable components everywhere.
+
+Use reusable hooks.
+
+Use reusable utility functions.
+
+Use reusable layouts.
+
+Follow SOLID principles.
+
+Keep the code modular.
+
+Keep the project scalable.
+
+Follow clean architecture.
+
+Follow feature-based architecture.
+
+====================================================
+DATABASE RULES
+====================================================
+
+Design the database like an enterprise application.
+
+Use UUID primary keys.
+
+Use foreign keys.
+
+Use indexes.
+
+Use created_at.
+
+Use updated_at.
+
+Use deleted_at.
+
+Support soft delete.
+
+Normalize the schema.
+
+====================================================
+UI RULES
+====================================================
+
+Every page must feel premium.
+
+Use consistent spacing.
+
+Professional typography.
+
+Loading skeletons.
+
+Empty states.
+
+Error states.
+
+Confirmation dialogs.
+
+Success notifications.
+
+Responsive on desktop, tablet and mobile.
+
+====================================================
+UX RULES
+====================================================
+
+Every action should provide user feedback.
+
+Show loading indicators.
+
+Show toast notifications.
+
+Show validation messages.
+
+Never leave the user confused.
+
+====================================================
+API RULES
+====================================================
+
+Every CRUD module must include:
+
+Create
+
+Read
+
+Update
+
+Delete
+
+Search
+
+Filter
+
+Pagination
+
+Sorting
+
+Validation
+
+Error handling
+
+====================================================
+PERFORMANCE
+====================================================
+
+Lazy load components where appropriate.
+
+Optimize rendering.
+
+Avoid unnecessary API calls.
+
+Use caching.
+
+Optimize database queries.
+
+====================================================
+TESTING
+====================================================
+
+Create the project so unit testing and integration testing can easily be added later.
+
+====================================================
+DOCUMENTATION
+====================================================
+
+Generate:
+
+README
+
+Folder Structure
+
+Database ER Diagram (Markdown)
+
+API Documentation
+
+Environment Variables
+
+Installation Guide
+
+Deployment Guide
+
+====================================================
+WHEN YOU REACH CONTEXT LIMIT
+====================================================
+
+If the response becomes too long:
+
+DO NOT summarize.
+
+DO NOT simplify.
+
+DO NOT skip modules.
+
+Instead stop exactly where you are and wait for my message:
+
+"Continue"
+
+When I send "Continue", resume from the exact last line without rewriting previously generated code.
+
+====================================================
+IMPORTANT
+====================================================
+
+Always prefer quality over speed.
+
+Think before coding.
+
+Build this as if it will be used daily by hundreds of employees inside a real company.
+
+Do not take shortcuts.
+
+Do not generate mock implementations for future integrations.
+
+Instead create clean service interfaces and TODO comments for future implementation.

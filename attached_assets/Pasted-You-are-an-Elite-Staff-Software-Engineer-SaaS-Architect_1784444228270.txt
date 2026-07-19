@@ -1,0 +1,586 @@
+You are an Elite Staff Software Engineer, SaaS Architect, Product Manager, UI/UX Designer, Database Architect, DevOps Engineer and Security Engineer.
+
+Your task is to build a COMPLETE production-ready internal enterprise SaaS application called **Ellipsonic OpsHub**.
+
+Do NOT build a prototype.
+Do NOT build a demo.
+Build a scalable production-ready application.
+
+The application should be around 80% complete, leaving only AI automation, n8n workflows and external integrations as placeholders.
+
+====================================================
+OBJECTIVE
+====================================================
+
+Ellipsonic OpsHub is an internal operations platform where every employee submits weekly work updates, department heads review them, management monitors company performance, and future AI automatically summarizes work across departments.
+
+Everything must be database driven.
+
+Nothing should be hardcoded.
+
+Everything should be configurable from the Admin Panel.
+
+====================================================
+TECH STACK
+====================================================
+
+Frontend
+- Next.js 15
+- React
+- TypeScript
+- Tailwind CSS
+- shadcn/ui
+
+Backend
+- Next.js API Routes
+
+Database
+- Supabase PostgreSQL
+
+Authentication
+- Supabase Auth
+
+Validation
+- Zod
+
+State
+- TanStack Query
+
+Tables
+- TanStack Table
+
+Charts
+- Recharts
+
+Icons
+- Lucide
+
+====================================================
+PROJECT STRUCTURE
+====================================================
+
+Create a professional scalable folder structure.
+
+Use feature-based architecture.
+
+Separate
+
+components
+
+hooks
+
+services
+
+lib
+
+types
+
+api
+
+utils
+
+database
+
+middleware
+
+config
+
+styles
+
+====================================================
+USER ROLES
+====================================================
+
+Admin
+
+Department Head
+
+Employee
+
+Management
+
+Each role must have different permissions.
+
+Protect every page.
+
+Protect every API.
+
+====================================================
+AUTHENTICATION
+====================================================
+
+Implement authentication.
+
+Login
+
+Forgot Password
+
+Reset Password
+
+Session handling
+
+Protected routes
+
+Role based access
+
+====================================================
+DASHBOARD
+====================================================
+
+Beautiful SaaS Dashboard.
+
+Cards
+
+Total Employees
+
+Departments
+
+Pending Reports
+
+Approved Reports
+
+Late Reports
+
+Weekly Completion %
+
+Charts
+
+Weekly Reports
+
+Monthly Reports
+
+Department Comparison
+
+Employee Activity
+
+Recent Activities
+
+Quick Actions
+
+Upcoming Deadlines
+
+====================================================
+DEPARTMENTS MODULE
+====================================================
+
+CRUD
+
+Department Name
+
+Description
+
+Department Head
+
+Status
+
+Reporting Frequency
+
+Reminder Day
+
+Reminder Time
+
+Submission Deadline
+
+Automation Source
+
+Recipients
+
+Search
+
+Filters
+
+Pagination
+
+Soft Delete
+
+====================================================
+EMPLOYEE MODULE
+====================================================
+
+CRUD
+
+Employee ID
+
+Photo
+
+Name
+
+Email
+
+Phone
+
+Department
+
+Role
+
+Manager
+
+Status
+
+Joining Date
+
+Search
+
+Filters
+
+Pagination
+
+====================================================
+WEEKLY REPORTS
+====================================================
+
+Employee can
+
+Save Draft
+
+Edit Draft
+
+Submit Report
+
+View Previous Reports
+
+Fields
+
+Achievements
+
+Completed Tasks
+
+Blockers
+
+Plans for Next Week
+
+Additional Notes
+
+Attachments
+
+Status
+
+Draft
+
+Submitted
+
+Approved
+
+Rejected
+
+Needs Changes
+
+====================================================
+APPROVAL WORKFLOW
+====================================================
+
+Employee
+
+↓
+
+Department Head
+
+↓
+
+Approve
+
+Reject
+
+Needs Changes
+
+↓
+
+Management Dashboard
+
+====================================================
+MANAGEMENT DASHBOARD
+====================================================
+
+Executive Summary
+
+Department Completion
+
+Pending Reports
+
+Late Reports
+
+Top Contributors
+
+Recent Activity
+
+Charts
+
+Downloads
+
+====================================================
+NOTIFICATIONS
+====================================================
+
+Database
+
+UI
+
+Reminder
+
+Approval
+
+Rejected
+
+Deadline
+
+Announcement
+
+====================================================
+ACTIVITY LOGS
+====================================================
+
+Track every action.
+
+Login
+
+Logout
+
+Create
+
+Update
+
+Delete
+
+Approve
+
+Reject
+
+====================================================
+AUDIT LOGS
+====================================================
+
+Track every database change.
+
+====================================================
+ANALYTICS
+====================================================
+
+Weekly Reports
+
+Monthly Reports
+
+Department Trends
+
+Employee Activity
+
+Submission Rate
+
+Late Reports
+
+====================================================
+SEARCH
+====================================================
+
+Global Search
+
+Search Employees
+
+Departments
+
+Reports
+
+====================================================
+FILTERS
+====================================================
+
+Department
+
+Role
+
+Status
+
+Week
+
+Date
+
+====================================================
+PROFILE
+====================================================
+
+Profile Picture
+
+Name
+
+Email
+
+Phone
+
+Department
+
+Role
+
+Password
+
+====================================================
+SETTINGS
+====================================================
+
+Company Name
+
+Logo
+
+Timezone
+
+Reporting Settings
+
+Theme
+
+====================================================
+DATABASE
+====================================================
+
+Design normalized PostgreSQL schema.
+
+Use UUIDs.
+
+Use foreign keys.
+
+Use indexes.
+
+Use timestamps.
+
+Use soft delete.
+
+Create tables for
+
+users
+
+employees
+
+departments
+
+weekly_reports
+
+approvals
+
+activities
+
+notifications
+
+automation_settings
+
+company_settings
+
+audit_logs
+
+====================================================
+API
+====================================================
+
+Create REST APIs.
+
+Validation.
+
+Error handling.
+
+Pagination.
+
+Filtering.
+
+Searching.
+
+====================================================
+UI
+====================================================
+
+Professional enterprise SaaS.
+
+Responsive.
+
+Dark Mode.
+
+Light Mode.
+
+Loading Skeletons.
+
+Error States.
+
+Empty States.
+
+Reusable Components.
+
+====================================================
+SECURITY
+====================================================
+
+RBAC
+
+Server Validation
+
+Protected APIs
+
+Environment Variables
+
+====================================================
+CODE QUALITY
+====================================================
+
+Strict TypeScript.
+
+Reusable Components.
+
+Reusable Hooks.
+
+Reusable Services.
+
+Meaningful Folder Structure.
+
+No Duplicate Code.
+
+====================================================
+PLACEHOLDER SERVICES
+====================================================
+
+Create service interfaces only.
+
+Do NOT implement.
+
+AI Service
+
+n8n Service
+
+GitHub Service
+
+Google Sheets Service
+
+Website Service
+
+CRM Service
+
+Meta Service
+
+Internyx Service
+
+Each service should have interface definitions and TODO comments for future implementation.
+
+====================================================
+FINAL OUTPUT
+====================================================
+
+Generate the complete application.
+
+Generate all pages.
+
+Generate all components.
+
+Generate database schema.
+
+Generate Supabase SQL.
+
+Generate APIs.
+
+Generate authentication.
+
+Generate responsive UI.
+
+Generate reusable components.
+
+Generate folder structure.
+
+Generate README.
+
+Generate .env.example.
+
+Generate installation steps.
+
+If the response becomes too long, DO NOT summarize or skip sections. Continue generating until the entire application foundation is complete.
