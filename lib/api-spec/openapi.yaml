@@ -3,20 +3,42 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Ellipsonic OpsHub API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: dashboard
+    description: Dashboard operations
+  - name: departments
+    description: Department operations
+  - name: employees
+    description: Employee operations
+  - name: reports
+    description: Weekly report operations
+  - name: notifications
+    description: Notification operations
+  - name: activity-logs
+    description: Activity log operations
+  - name: audit-logs
+    description: Audit log operations
+  - name: analytics
+    description: Analytics operations
+  - name: management
+    description: Management dashboard operations
+  - name: settings
+    description: Settings operations
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +46,1821 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ───── AUTH ─────
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user profile
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Unauthorized
+
+  /auth/profile:
+    put:
+      operationId: updateProfile
+      tags: [auth]
+      summary: Update current user profile
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdate"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+  # ───── DASHBOARD ─────
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get dashboard statistics
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/recent-activity:
+    get:
+      operationId: getDashboardRecentActivity
+      tags: [dashboard]
+      summary: Get recent activity feed
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Recent activities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
+  /dashboard/upcoming-deadlines:
+    get:
+      operationId: getDashboardUpcomingDeadlines
+      tags: [dashboard]
+      summary: Get upcoming report deadlines
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Upcoming deadlines
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DeadlineItem"
+
+  /dashboard/chart-data:
+    get:
+      operationId: getDashboardChartData
+      tags: [dashboard]
+      summary: Get chart data for dashboard
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: weeks
+          in: query
+          schema:
+            type: integer
+            default: 8
+      responses:
+        "200":
+          description: Chart data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardChartData"
+
+  # ───── DEPARTMENTS ─────
+  /departments:
+    get:
+      operationId: listDepartments
+      tags: [departments]
+      summary: List departments
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Paginated departments
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DepartmentPage"
+    post:
+      operationId: createDepartment
+      tags: [departments]
+      summary: Create a department
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DepartmentInput"
+      responses:
+        "201":
+          description: Created department
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Department"
+
+  /departments/{id}:
+    get:
+      operationId: getDepartment
+      tags: [departments]
+      summary: Get a department
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Department
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Department"
+        "404":
+          description: Not found
+    put:
+      operationId: updateDepartment
+      tags: [departments]
+      summary: Update a department
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DepartmentUpdate"
+      responses:
+        "200":
+          description: Updated department
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Department"
+    delete:
+      operationId: deleteDepartment
+      tags: [departments]
+      summary: Soft delete a department
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # ───── EMPLOYEES ─────
+  /employees:
+    get:
+      operationId: listEmployees
+      tags: [employees]
+      summary: List employees
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: department_id
+          in: query
+          schema:
+            type: string
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [admin, department_head, employee, management]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, on_leave]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Paginated employees
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmployeePage"
+    post:
+      operationId: createEmployee
+      tags: [employees]
+      summary: Create an employee
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmployeeInput"
+      responses:
+        "201":
+          description: Created employee
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+
+  /employees/{id}:
+    get:
+      operationId: getEmployee
+      tags: [employees]
+      summary: Get an employee
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Employee
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+        "404":
+          description: Not found
+    put:
+      operationId: updateEmployee
+      tags: [employees]
+      summary: Update an employee
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmployeeUpdate"
+      responses:
+        "200":
+          description: Updated employee
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+    delete:
+      operationId: deleteEmployee
+      tags: [employees]
+      summary: Soft delete an employee
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # ───── WEEKLY REPORTS ─────
+  /reports:
+    get:
+      operationId: listReports
+      tags: [reports]
+      summary: List weekly reports
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: department_id
+          in: query
+          schema:
+            type: string
+        - name: employee_id
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, submitted, approved, rejected, needs_changes]
+        - name: week_start
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Paginated reports
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportPage"
+    post:
+      operationId: createReport
+      tags: [reports]
+      summary: Create a weekly report (draft)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportInput"
+      responses:
+        "201":
+          description: Created report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+
+  /reports/{id}:
+    get:
+      operationId: getReport
+      tags: [reports]
+      summary: Get a weekly report
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+    put:
+      operationId: updateReport
+      tags: [reports]
+      summary: Update a weekly report
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportUpdate"
+      responses:
+        "200":
+          description: Updated report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+    delete:
+      operationId: deleteReport
+      tags: [reports]
+      summary: Delete a draft report
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /reports/{id}/submit:
+    post:
+      operationId: submitReport
+      tags: [reports]
+      summary: Submit a report for review
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Submitted report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+
+  /reports/{id}/approve:
+    post:
+      operationId: approveReport
+      tags: [reports]
+      summary: Approve a submitted report
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApprovalAction"
+      responses:
+        "200":
+          description: Approved report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+
+  /reports/{id}/reject:
+    post:
+      operationId: rejectReport
+      tags: [reports]
+      summary: Reject a submitted report
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApprovalAction"
+      responses:
+        "200":
+          description: Rejected report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+
+  /reports/{id}/request-changes:
+    post:
+      operationId: requestReportChanges
+      tags: [reports]
+      summary: Request changes on a submitted report
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApprovalAction"
+      responses:
+        "200":
+          description: Report with changes requested
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+
+  # ───── NOTIFICATIONS ─────
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List notifications for current user
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: unread_only
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Paginated notifications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationPage"
+
+  /notifications/unread-count:
+    get:
+      operationId: getUnreadNotificationCount
+      tags: [notifications]
+      summary: Get unread notification count
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Unread count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnreadCount"
+
+  /notifications/read-all:
+    put:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark all notifications as read
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /notifications/{id}/read:
+    put:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark a notification as read
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Updated notification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  # ───── ACTIVITY LOGS ─────
+  /activity-logs:
+    get:
+      operationId: listActivityLogs
+      tags: [activity-logs]
+      summary: List activity logs
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: user_id
+          in: query
+          schema:
+            type: string
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Paginated activity logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityLogPage"
+
+  # ───── AUDIT LOGS ─────
+  /audit-logs:
+    get:
+      operationId: listAuditLogs
+      tags: [audit-logs]
+      summary: List audit logs
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: table_name
+          in: query
+          schema:
+            type: string
+        - name: operation
+          in: query
+          schema:
+            type: string
+            enum: [INSERT, UPDATE, DELETE]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Paginated audit logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogPage"
+
+  # ───── ANALYTICS ─────
+  /analytics/overview:
+    get:
+      operationId: getAnalyticsOverview
+      tags: [analytics]
+      summary: Get analytics overview
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Analytics overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsOverview"
+
+  /analytics/weekly-trends:
+    get:
+      operationId: getWeeklyTrends
+      tags: [analytics]
+      summary: Get weekly report submission trends
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: weeks
+          in: query
+          schema:
+            type: integer
+            default: 12
+      responses:
+        "200":
+          description: Weekly trends
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TrendDataPoint"
+
+  /analytics/monthly-trends:
+    get:
+      operationId: getMonthlyTrends
+      tags: [analytics]
+      summary: Get monthly report submission trends
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: months
+          in: query
+          schema:
+            type: integer
+            default: 12
+      responses:
+        "200":
+          description: Monthly trends
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TrendDataPoint"
+
+  /analytics/department-comparison:
+    get:
+      operationId: getDepartmentComparison
+      tags: [analytics]
+      summary: Get department-level submission comparison
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Department comparison
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DepartmentComparisonItem"
+
+  /analytics/employee-activity:
+    get:
+      operationId: getEmployeeActivity
+      tags: [analytics]
+      summary: Get employee activity stats
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Employee activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EmployeeActivityItem"
+
+  # ───── MANAGEMENT ─────
+  /management/summary:
+    get:
+      operationId: getManagementSummary
+      tags: [management]
+      summary: Get management executive summary
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Management summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagementSummary"
+
+  /management/department-completion:
+    get:
+      operationId: getManagementDepartmentCompletion
+      tags: [management]
+      summary: Get department completion rates for management
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Department completion
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DepartmentCompletionItem"
+
+  /management/top-contributors:
+    get:
+      operationId: getTopContributors
+      tags: [management]
+      summary: Get top contributing employees
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Top contributors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TopContributorItem"
+
+  /management/pending-reviews:
+    get:
+      operationId: getManagementPendingReviews
+      tags: [management]
+      summary: Get reports pending review
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Pending reviews
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportPage"
+
+  # ───── SETTINGS ─────
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      summary: Get company settings
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Company settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanySettings"
+    put:
+      operationId: updateSettings
+      tags: [settings]
+      summary: Update company settings
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompanySettingsInput"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanySettings"
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     HealthStatus:
       type: object
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required: [success]
+
+    # ── Auth / User ──
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        auth_user_id:
+          type: string
+        employee_id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: ["string", "null"]
+        photo_url:
+          type: ["string", "null"]
+        role:
+          type: string
+          enum: [admin, department_head, employee, management]
+        department_id:
+          type: ["string", "null"]
+        department_name:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [active, inactive, on_leave]
+        joining_date:
+          type: ["string", "null"]
+        created_at:
+          type: string
+      required: [id, auth_user_id, name, email, role, status, created_at]
+
+    ProfileUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        phone:
+          type: string
+        photo_url:
+          type: string
+        current_password:
+          type: string
+        new_password:
+          type: string
+
+    # ── Dashboard ──
+    DashboardStats:
+      type: object
+      properties:
+        total_employees:
+          type: integer
+        total_departments:
+          type: integer
+        pending_reports:
+          type: integer
+        approved_reports:
+          type: integer
+        late_reports:
+          type: integer
+        weekly_completion_pct:
+          type: number
+        reports_this_week:
+          type: integer
+        reports_submitted_today:
+          type: integer
+      required:
+        [
+          total_employees,
+          total_departments,
+          pending_reports,
+          approved_reports,
+          late_reports,
+          weekly_completion_pct,
+          reports_this_week,
+          reports_submitted_today,
+        ]
+
+    ActivityItem:
+      type: object
+      properties:
+        id:
+          type: string
+        user_name:
+          type: string
+        user_photo:
+          type: ["string", "null"]
+        action:
+          type: string
+        entity_type:
+          type: string
+        entity_id:
+          type: string
+        description:
+          type: string
+        created_at:
+          type: string
+      required: [id, user_name, action, entity_type, entity_id, description, created_at]
+
+    DeadlineItem:
+      type: object
+      properties:
+        department_id:
+          type: string
+        department_name:
+          type: string
+        deadline:
+          type: string
+        days_remaining:
+          type: integer
+        submitted_count:
+          type: integer
+        total_count:
+          type: integer
+      required:
+        [department_id, department_name, deadline, days_remaining, submitted_count, total_count]
+
+    DashboardChartData:
+      type: object
+      properties:
+        weekly_reports:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrendDataPoint"
+        department_comparison:
+          type: array
+          items:
+            $ref: "#/components/schemas/DepartmentComparisonItem"
+      required: [weekly_reports, department_comparison]
+
+    TrendDataPoint:
+      type: object
+      properties:
+        label:
+          type: string
+        submitted:
+          type: integer
+        approved:
+          type: integer
+        rejected:
+          type: integer
+        late:
+          type: integer
+      required: [label, submitted, approved, rejected, late]
+
+    DepartmentComparisonItem:
+      type: object
+      properties:
+        department_id:
+          type: string
+        department_name:
+          type: string
+        submitted:
+          type: integer
+        approved:
+          type: integer
+        completion_pct:
+          type: number
+        total_employees:
+          type: integer
+      required:
+        [department_id, department_name, submitted, approved, completion_pct, total_employees]
+
+    # ── Departments ──
+    Department:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        head_id:
+          type: ["string", "null"]
+        head_name:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [active, inactive]
+        reporting_frequency:
+          type: string
+          enum: [weekly, biweekly, monthly]
+        reminder_day:
+          type: ["string", "null"]
+        reminder_time:
+          type: ["string", "null"]
+        submission_deadline:
+          type: ["string", "null"]
+        automation_source:
+          type: ["string", "null"]
+        recipients:
+          type: array
+          items:
+            type: string
+        employee_count:
+          type: integer
+        created_at:
+          type: string
+        updated_at:
+          type: string
+      required:
+        [
+          id,
+          name,
+          status,
+          reporting_frequency,
+          recipients,
+          employee_count,
+          created_at,
+          updated_at,
+        ]
+
+    DepartmentPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Department"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        total_pages:
+          type: integer
+      required: [data, total, page, limit, total_pages]
+
+    DepartmentInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        head_id:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+        reporting_frequency:
+          type: string
+          enum: [weekly, biweekly, monthly]
+        reminder_day:
+          type: string
+        reminder_time:
+          type: string
+        submission_deadline:
+          type: string
+        automation_source:
+          type: string
+        recipients:
+          type: array
+          items:
+            type: string
+      required: [name, reporting_frequency]
+
+    DepartmentUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        head_id:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+        reporting_frequency:
+          type: string
+          enum: [weekly, biweekly, monthly]
+        reminder_day:
+          type: string
+        reminder_time:
+          type: string
+        submission_deadline:
+          type: string
+        automation_source:
+          type: string
+        recipients:
+          type: array
+          items:
+            type: string
+
+    # ── Employees ──
+    Employee:
+      type: object
+      properties:
+        id:
+          type: string
+        employee_id:
+          type: string
+        auth_user_id:
+          type: ["string", "null"]
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: ["string", "null"]
+        photo_url:
+          type: ["string", "null"]
+        department_id:
+          type: ["string", "null"]
+        department_name:
+          type: ["string", "null"]
+        role:
+          type: string
+          enum: [admin, department_head, employee, management]
+        manager_id:
+          type: ["string", "null"]
+        manager_name:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [active, inactive, on_leave]
+        joining_date:
+          type: ["string", "null"]
+        created_at:
+          type: string
+        updated_at:
+          type: string
+      required:
+        [id, employee_id, name, email, role, status, created_at, updated_at]
+
+    EmployeePage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Employee"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        total_pages:
+          type: integer
+      required: [data, total, page, limit, total_pages]
+
+    EmployeeInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        email:
+          type: string
+        phone:
+          type: string
+        photo_url:
+          type: string
+        department_id:
+          type: string
+        role:
+          type: string
+          enum: [admin, department_head, employee, management]
+        manager_id:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, on_leave]
+        joining_date:
+          type: string
+          format: date
+        send_invite:
+          type: boolean
+          default: false
+      required: [name, email, role]
+
+    EmployeeUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        phone:
+          type: string
+        photo_url:
+          type: string
+        department_id:
+          type: string
+        role:
+          type: string
+          enum: [admin, department_head, employee, management]
+        manager_id:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, on_leave]
+        joining_date:
+          type: string
+          format: date
+
+    # ── Reports ──
+    Report:
+      type: object
+      properties:
+        id:
+          type: string
+        employee_id:
+          type: string
+        employee_name:
+          type: string
+        employee_photo:
+          type: ["string", "null"]
+        department_id:
+          type: ["string", "null"]
+        department_name:
+          type: ["string", "null"]
+        week_start:
+          type: string
+          format: date
+        achievements:
+          type: string
+        completed_tasks:
+          type: string
+        blockers:
+          type: ["string", "null"]
+        next_week_plans:
+          type: string
+        additional_notes:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [draft, submitted, approved, rejected, needs_changes]
+        reviewer_id:
+          type: ["string", "null"]
+        reviewer_name:
+          type: ["string", "null"]
+        review_comment:
+          type: ["string", "null"]
+        reviewed_at:
+          type: ["string", "null"]
+        submitted_at:
+          type: ["string", "null"]
+        created_at:
+          type: string
+        updated_at:
+          type: string
+      required:
+        [
+          id,
+          employee_id,
+          employee_name,
+          week_start,
+          achievements,
+          completed_tasks,
+          next_week_plans,
+          status,
+          created_at,
+          updated_at,
+        ]
+
+    ReportPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Report"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        total_pages:
+          type: integer
+      required: [data, total, page, limit, total_pages]
+
+    ReportInput:
+      type: object
+      properties:
+        week_start:
+          type: string
+          format: date
+        achievements:
+          type: string
+          minLength: 1
+        completed_tasks:
+          type: string
+          minLength: 1
+        blockers:
+          type: string
+        next_week_plans:
+          type: string
+          minLength: 1
+        additional_notes:
+          type: string
+      required: [week_start, achievements, completed_tasks, next_week_plans]
+
+    ReportUpdate:
+      type: object
+      properties:
+        achievements:
+          type: string
+          minLength: 1
+        completed_tasks:
+          type: string
+          minLength: 1
+        blockers:
+          type: string
+        next_week_plans:
+          type: string
+          minLength: 1
+        additional_notes:
+          type: string
+
+    ApprovalAction:
+      type: object
+      properties:
+        comment:
+          type: string
+
+    # ── Notifications ──
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        type:
+          type: string
+          enum: [reminder, approval, rejected, deadline, announcement, needs_changes]
+        title:
+          type: string
+        message:
+          type: string
+        entity_type:
+          type: ["string", "null"]
+        entity_id:
+          type: ["string", "null"]
+        is_read:
+          type: boolean
+        created_at:
+          type: string
+      required: [id, user_id, type, title, message, is_read, created_at]
+
+    NotificationPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Notification"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        total_pages:
+          type: integer
+        unread_count:
+          type: integer
+      required: [data, total, page, limit, total_pages, unread_count]
+
+    UnreadCount:
+      type: object
+      properties:
+        count:
+          type: integer
+      required: [count]
+
+    # ── Activity Logs ──
+    ActivityLog:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: ["string", "null"]
+        user_name:
+          type: ["string", "null"]
+        user_photo:
+          type: ["string", "null"]
+        action:
+          type: string
+        entity_type:
+          type: ["string", "null"]
+        entity_id:
+          type: ["string", "null"]
+        description:
+          type: string
+        ip_address:
+          type: ["string", "null"]
+        created_at:
+          type: string
+      required: [id, action, description, created_at]
+
+    ActivityLogPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityLog"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        total_pages:
+          type: integer
+      required: [data, total, page, limit, total_pages]
+
+    # ── Audit Logs ──
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: ["string", "null"]
+        user_name:
+          type: ["string", "null"]
+        table_name:
+          type: string
+        operation:
+          type: string
+          enum: [INSERT, UPDATE, DELETE]
+        record_id:
+          type: ["string", "null"]
+        old_values:
+          type: ["string", "null"]
+        new_values:
+          type: ["string", "null"]
+        created_at:
+          type: string
+      required: [id, table_name, operation, created_at]
+
+    AuditLogPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditLog"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        total_pages:
+          type: integer
+      required: [data, total, page, limit, total_pages]
+
+    # ── Analytics ──
+    AnalyticsOverview:
+      type: object
+      properties:
+        total_reports_all_time:
+          type: integer
+        submission_rate_pct:
+          type: number
+        avg_approval_time_hours:
+          type: number
+        late_submission_pct:
+          type: number
+        most_active_department:
+          type: ["string", "null"]
+        top_submitter:
+          type: ["string", "null"]
+      required:
+        [
+          total_reports_all_time,
+          submission_rate_pct,
+          avg_approval_time_hours,
+          late_submission_pct,
+        ]
+
+    EmployeeActivityItem:
+      type: object
+      properties:
+        employee_id:
+          type: string
+        employee_name:
+          type: string
+        employee_photo:
+          type: ["string", "null"]
+        department_name:
+          type: ["string", "null"]
+        total_reports:
+          type: integer
+        approved_reports:
+          type: integer
+        on_time_pct:
+          type: number
+      required:
+        [employee_id, employee_name, total_reports, approved_reports, on_time_pct]
+
+    # ── Management ──
+    ManagementSummary:
+      type: object
+      properties:
+        total_reports_this_week:
+          type: integer
+        pending_reviews:
+          type: integer
+        late_reports:
+          type: integer
+        approved_this_week:
+          type: integer
+        completion_rate_pct:
+          type: number
+        departments_on_track:
+          type: integer
+        departments_behind:
+          type: integer
+        recent_approvals:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityItem"
+      required:
+        [
+          total_reports_this_week,
+          pending_reviews,
+          late_reports,
+          approved_this_week,
+          completion_rate_pct,
+          departments_on_track,
+          departments_behind,
+          recent_approvals,
+        ]
+
+    DepartmentCompletionItem:
+      type: object
+      properties:
+        department_id:
+          type: string
+        department_name:
+          type: string
+        head_name:
+          type: ["string", "null"]
+        total_employees:
+          type: integer
+        submitted:
+          type: integer
+        approved:
+          type: integer
+        pending:
+          type: integer
+        late:
+          type: integer
+        completion_pct:
+          type: number
+      required:
+        [
+          department_id,
+          department_name,
+          total_employees,
+          submitted,
+          approved,
+          pending,
+          late,
+          completion_pct,
+        ]
+
+    TopContributorItem:
+      type: object
+      properties:
+        employee_id:
+          type: string
+        employee_name:
+          type: string
+        employee_photo:
+          type: ["string", "null"]
+        department_name:
+          type: ["string", "null"]
+        total_reports:
+          type: integer
+        streak_weeks:
+          type: integer
+        on_time_pct:
+          type: number
+      required:
+        [employee_id, employee_name, total_reports, streak_weeks, on_time_pct]
+
+    # ── Settings ──
+    CompanySettings:
+      type: object
+      properties:
+        id:
+          type: string
+        company_name:
+          type: string
+        logo_url:
+          type: ["string", "null"]
+        timezone:
+          type: string
+        reporting_deadline_day:
+          type: string
+        reporting_deadline_time:
+          type: string
+        theme:
+          type: string
+          enum: [light, dark, system]
+        allow_late_submissions:
+          type: boolean
+        require_manager_approval:
+          type: boolean
+        notification_enabled:
+          type: boolean
+        created_at:
+          type: string
+        updated_at:
+          type: string
+      required:
+        [
+          id,
+          company_name,
+          timezone,
+          reporting_deadline_day,
+          reporting_deadline_time,
+          theme,
+          allow_late_submissions,
+          require_manager_approval,
+          notification_enabled,
+          created_at,
+          updated_at,
+        ]
+
+    CompanySettingsInput:
+      type: object
+      properties:
+        company_name:
+          type: string
+          minLength: 1
+        logo_url:
+          type: string
+        timezone:
+          type: string
+        reporting_deadline_day:
+          type: string
+        reporting_deadline_time:
+          type: string
+        theme:
+          type: string
+          enum: [light, dark, system]
+        allow_late_submissions:
+          type: boolean
+        require_manager_approval:
+          type: boolean
+        notification_enabled:
+          type: boolean

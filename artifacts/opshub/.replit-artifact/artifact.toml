@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Ellipsonic OpsHub"
+version = "1.0.0"
+id = "artifacts/opshub"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23304
+
+[services.development]
+run = "pnpm --filter @workspace/opshub run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/opshub", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/opshub/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23304"
+BASE_PATH = "/"

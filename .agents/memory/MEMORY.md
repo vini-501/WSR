@@ -1,0 +1,1 @@
+- [Supabase DB connection from Replit](supabase-pooler-connection.md) — direct DB host is ENOTFOUND; auto-rewrite to ap-northeast-1 transaction pooler in lib/db/src/index.ts
