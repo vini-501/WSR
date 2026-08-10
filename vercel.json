@@ -1,8 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": null,
-  "buildCommand": "pnpm --filter @workspace/opshub build",
-  "outputDirectory": "artifacts/opshub/dist/public",
+  "buildCommand": "pnpm --filter @workspace/opshub build && node ./scripts/copy-build.mjs",
   "rewrites": [
     {
       "source": "/api/(.*)",
