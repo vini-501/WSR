@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useListDepartments, useCreateDepartment, useUpdateDepartment, useDeleteDepartment } from "@workspace/api-client-react";
 import { Department, DepartmentInput } from "@workspace/api-client-react";
 import { DataTable } from "@/components/ui/data-table";
@@ -22,12 +22,24 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getListDepartmentsQueryKey } from "@workspace/api-client-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { buttonVariants } from "@/components/ui/button";
 
 export function DepartmentsList() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editDept, setEditDept] = useState<Department | null>(null);
+  const [deptToDeleteId, setDeptToDeleteId] = useState<string | null>(null);
 
   const { data, isLoading } = useListDepartments({ page, limit: 10, search });
   const queryClient = useQueryClient();
@@ -35,16 +47,19 @@ export function DepartmentsList() {
 
   const deleteDept = useDeleteDepartment();
 
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this department?")) {
-      deleteDept.mutate({ id }, {
-        onSuccess: () => {
-          toast({ title: "Department deleted" });
-          queryClient.invalidateQueries({ queryKey: getListDepartmentsQueryKey() });
-        },
-        onError: (err: any) => toast({ title: "Failed to delete", description: err.message, variant: "destructive" })
-      });
-    }
+  const confirmDelete = () => {
+    if (!deptToDeleteId) return;
+    deleteDept.mutate({ id: deptToDeleteId }, {
+      onSuccess: () => {
+        toast({ title: "Department deleted" });
+        queryClient.invalidateQueries({ queryKey: getListDepartmentsQueryKey() });
+        setDeptToDeleteId(null);
+      },
+      onError: (err: any) => {
+        toast({ title: "Failed to delete", description: err.message, variant: "destructive" });
+        setDeptToDeleteId(null);
+      }
+    });
   };
 
   const columns = [
@@ -99,7 +114,7 @@ export function DepartmentsList() {
                 <Edit className="mr-2 h-4 w-4" /> Edit department
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive cursor-pointer" onClick={() => handleDelete(dept.id)}>
+              <DropdownMenuItem className="text-destructive cursor-pointer" onSelect={() => setDeptToDeleteId(dept.id)}>
                 <Trash className="mr-2 h-4 w-4" /> Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -166,6 +181,23 @@ export function DepartmentsList() {
           department={editDept} 
         />
       )}
+
+      <AlertDialog open={!!deptToDeleteId} onOpenChange={(open) => !open && setDeptToDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will soft-delete the department and disassociate all members belonging to it.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className={buttonVariants({ variant: "destructive" })}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -175,6 +207,15 @@ function DepartmentDialog({ open, onOpenChange, department }: { open: boolean, o
   const [description, setDescription] = useState(department?.description || "");
   const [frequency, setFrequency] = useState<any>(department?.reporting_frequency || "weekly");
   const [status, setStatus] = useState<any>(department?.status || "active");
+
+  useEffect(() => {
+    if (open) {
+      setName(department?.name || "");
+      setDescription(department?.description || "");
+      setFrequency(department?.reporting_frequency || "weekly");
+      setStatus(department?.status || "active");
+    }
+  }, [open, department]);
 
   const queryClient = useQueryClient();
   const { toast } = useToast();

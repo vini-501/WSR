@@ -30,8 +30,13 @@ export const GetMeResponse = zod.object({
   "role": zod.enum(['admin', 'department_head', 'employee', 'management']),
   "department_id": zod.string().nullish(),
   "department_name": zod.string().nullish(),
-  "status": zod.enum(['active', 'inactive', 'on_leave']),
+  "status": zod.enum(['active', 'inactive', 'on_leave', 'resigned']),
   "joining_date": zod.string().nullish(),
+  "designation": zod.string().nullish(),
+  "employment_type": zod.string().nullish(),
+  "timezone": zod.string().nullish(),
+  "work_location": zod.string().nullish(),
+  "weekly_reporting_frequency": zod.number().nullish(),
   "created_at": zod.string()
 })
 
@@ -61,8 +66,13 @@ export const UpdateProfileResponse = zod.object({
   "role": zod.enum(['admin', 'department_head', 'employee', 'management']),
   "department_id": zod.string().nullish(),
   "department_name": zod.string().nullish(),
-  "status": zod.enum(['active', 'inactive', 'on_leave']),
+  "status": zod.enum(['active', 'inactive', 'on_leave', 'resigned']),
   "joining_date": zod.string().nullish(),
+  "designation": zod.string().nullish(),
+  "employment_type": zod.string().nullish(),
+  "timezone": zod.string().nullish(),
+  "work_location": zod.string().nullish(),
+  "weekly_reporting_frequency": zod.number().nullish(),
   "created_at": zod.string()
 })
 
@@ -306,6 +316,7 @@ export const DeleteDepartmentResponse = zod.object({
 /**
  * @summary List employees
  */
+export const listEmployeesQuerySortOrderDefault = `asc`;
 export const listEmployeesQueryPageDefault = 1;
 export const listEmployeesQueryLimitDefault = 20;
 
@@ -313,7 +324,9 @@ export const ListEmployeesQueryParams = zod.object({
   "search": zod.coerce.string().optional(),
   "department_id": zod.coerce.string().optional(),
   "role": zod.enum(['admin', 'department_head', 'employee', 'management']).optional(),
-  "status": zod.enum(['active', 'inactive', 'on_leave']).optional(),
+  "status": zod.enum(['active', 'inactive', 'on_leave', 'resigned']).optional(),
+  "sortBy": zod.enum(['name', 'employee_id', 'role', 'status', 'joining_date', 'department_name']).optional(),
+  "sortOrder": zod.enum(['asc', 'desc']).default(listEmployeesQuerySortOrderDefault),
   "page": zod.coerce.number().default(listEmployeesQueryPageDefault),
   "limit": zod.coerce.number().default(listEmployeesQueryLimitDefault)
 })
@@ -332,8 +345,13 @@ export const ListEmployeesResponse = zod.object({
   "role": zod.enum(['admin', 'department_head', 'employee', 'management']),
   "manager_id": zod.string().nullish(),
   "manager_name": zod.string().nullish(),
-  "status": zod.enum(['active', 'inactive', 'on_leave']),
+  "status": zod.enum(['active', 'inactive', 'on_leave', 'resigned']),
   "joining_date": zod.string().nullish(),
+  "designation": zod.string().nullish(),
+  "employment_type": zod.string().nullish(),
+  "timezone": zod.string().nullish(),
+  "work_location": zod.string().nullish(),
+  "weekly_reporting_frequency": zod.number().nullish(),
   "created_at": zod.string(),
   "updated_at": zod.string()
 })),
@@ -358,8 +376,13 @@ export const CreateEmployeeBody = zod.object({
   "department_id": zod.string().optional(),
   "role": zod.enum(['admin', 'department_head', 'employee', 'management']),
   "manager_id": zod.string().optional(),
-  "status": zod.enum(['active', 'inactive', 'on_leave']).optional(),
+  "status": zod.enum(['active', 'inactive', 'on_leave', 'resigned']).optional(),
   "joining_date": zod.coerce.date().optional(),
+  "designation": zod.string().optional(),
+  "employment_type": zod.string().optional(),
+  "timezone": zod.string().optional(),
+  "work_location": zod.string().optional(),
+  "weekly_reporting_frequency": zod.number().optional(),
   "send_invite": zod.boolean().default(createEmployeeBodySendInviteDefault)
 })
 
@@ -376,11 +399,36 @@ export const CreateEmployeeResponse = zod.object({
   "role": zod.enum(['admin', 'department_head', 'employee', 'management']),
   "manager_id": zod.string().nullish(),
   "manager_name": zod.string().nullish(),
-  "status": zod.enum(['active', 'inactive', 'on_leave']),
+  "status": zod.enum(['active', 'inactive', 'on_leave', 'resigned']),
   "joining_date": zod.string().nullish(),
+  "designation": zod.string().nullish(),
+  "employment_type": zod.string().nullish(),
+  "timezone": zod.string().nullish(),
+  "work_location": zod.string().nullish(),
+  "weekly_reporting_frequency": zod.number().nullish(),
   "created_at": zod.string(),
   "updated_at": zod.string()
 })
+
+
+/**
+ * @summary Bulk import employees from CSV
+ */
+export const ImportEmployeesBody = zod.object({
+  "csvData": zod.string()
+})
+
+export const ImportEmployeesResponse = zod.object({
+  "success": zod.boolean(),
+  "count": zod.number(),
+  "message": zod.string()
+})
+
+
+/**
+ * @summary Bulk export employees to CSV
+ */
+export const ExportEmployeesResponse = zod.unknown()
 
 
 /**
@@ -403,8 +451,13 @@ export const GetEmployeeResponse = zod.object({
   "role": zod.enum(['admin', 'department_head', 'employee', 'management']),
   "manager_id": zod.string().nullish(),
   "manager_name": zod.string().nullish(),
-  "status": zod.enum(['active', 'inactive', 'on_leave']),
+  "status": zod.enum(['active', 'inactive', 'on_leave', 'resigned']),
   "joining_date": zod.string().nullish(),
+  "designation": zod.string().nullish(),
+  "employment_type": zod.string().nullish(),
+  "timezone": zod.string().nullish(),
+  "work_location": zod.string().nullish(),
+  "weekly_reporting_frequency": zod.number().nullish(),
   "created_at": zod.string(),
   "updated_at": zod.string()
 })
@@ -427,8 +480,13 @@ export const UpdateEmployeeBody = zod.object({
   "department_id": zod.string().optional(),
   "role": zod.enum(['admin', 'department_head', 'employee', 'management']).optional(),
   "manager_id": zod.string().optional(),
-  "status": zod.enum(['active', 'inactive', 'on_leave']).optional(),
-  "joining_date": zod.coerce.date().optional()
+  "status": zod.enum(['active', 'inactive', 'on_leave', 'resigned']).optional(),
+  "joining_date": zod.coerce.date().optional(),
+  "designation": zod.string().optional(),
+  "employment_type": zod.string().optional(),
+  "timezone": zod.string().optional(),
+  "work_location": zod.string().optional(),
+  "weekly_reporting_frequency": zod.number().optional()
 })
 
 export const UpdateEmployeeResponse = zod.object({
@@ -444,8 +502,13 @@ export const UpdateEmployeeResponse = zod.object({
   "role": zod.enum(['admin', 'department_head', 'employee', 'management']),
   "manager_id": zod.string().nullish(),
   "manager_name": zod.string().nullish(),
-  "status": zod.enum(['active', 'inactive', 'on_leave']),
+  "status": zod.enum(['active', 'inactive', 'on_leave', 'resigned']),
   "joining_date": zod.string().nullish(),
+  "designation": zod.string().nullish(),
+  "employment_type": zod.string().nullish(),
+  "timezone": zod.string().nullish(),
+  "work_location": zod.string().nullish(),
+  "weekly_reporting_frequency": zod.number().nullish(),
   "created_at": zod.string(),
   "updated_at": zod.string()
 })
@@ -456,6 +519,12 @@ export const UpdateEmployeeResponse = zod.object({
  */
 export const DeleteEmployeeParams = zod.object({
   "id": zod.coerce.string()
+})
+
+export const deleteEmployeeQueryPermanentDefault = false;
+
+export const DeleteEmployeeQueryParams = zod.object({
+  "permanent": zod.coerce.boolean().default(deleteEmployeeQueryPermanentDefault)
 })
 
 export const DeleteEmployeeResponse = zod.object({
@@ -474,7 +543,7 @@ export const ListReportsQueryParams = zod.object({
   "search": zod.coerce.string().optional(),
   "department_id": zod.coerce.string().optional(),
   "employee_id": zod.coerce.string().optional(),
-  "status": zod.enum(['draft', 'submitted', 'approved', 'rejected', 'needs_changes']).optional(),
+  "status": zod.enum(['draft', 'submitted', 'under_review', 'approved', 'rejected', 'needs_changes']).optional(),
   "week_start": zod.date().optional(),
   "page": zod.coerce.number().default(listReportsQueryPageDefault),
   "limit": zod.coerce.number().default(listReportsQueryLimitDefault)
@@ -491,10 +560,13 @@ export const ListReportsResponse = zod.object({
   "week_start": zod.coerce.date(),
   "achievements": zod.string(),
   "completed_tasks": zod.string(),
+  "ongoing_tasks": zod.string(),
   "blockers": zod.string().nullish(),
   "next_week_plans": zod.string(),
+  "support_needed": zod.string().nullish(),
   "additional_notes": zod.string().nullish(),
-  "status": zod.enum(['draft', 'submitted', 'approved', 'rejected', 'needs_changes']),
+  "overall_progress": zod.number(),
+  "status": zod.enum(['draft', 'submitted', 'under_review', 'approved', 'rejected', 'needs_changes']),
   "reviewer_id": zod.string().nullish(),
   "reviewer_name": zod.string().nullish(),
   "review_comment": zod.string().nullish(),
@@ -517,14 +589,21 @@ export const ListReportsResponse = zod.object({
 
 
 
+export const createReportBodyOverallProgressMin = 0;
+export const createReportBodyOverallProgressMax = 100;
+
+
 
 export const CreateReportBody = zod.object({
   "week_start": zod.coerce.date(),
   "achievements": zod.string().min(1),
   "completed_tasks": zod.string().min(1),
+  "ongoing_tasks": zod.string().min(1),
   "blockers": zod.string().optional(),
   "next_week_plans": zod.string().min(1),
-  "additional_notes": zod.string().optional()
+  "support_needed": zod.string().optional(),
+  "additional_notes": zod.string().optional(),
+  "overall_progress": zod.number().min(createReportBodyOverallProgressMin).max(createReportBodyOverallProgressMax).optional()
 })
 
 export const CreateReportResponse = zod.object({
@@ -537,10 +616,13 @@ export const CreateReportResponse = zod.object({
   "week_start": zod.coerce.date(),
   "achievements": zod.string(),
   "completed_tasks": zod.string(),
+  "ongoing_tasks": zod.string(),
   "blockers": zod.string().nullish(),
   "next_week_plans": zod.string(),
+  "support_needed": zod.string().nullish(),
   "additional_notes": zod.string().nullish(),
-  "status": zod.enum(['draft', 'submitted', 'approved', 'rejected', 'needs_changes']),
+  "overall_progress": zod.number(),
+  "status": zod.enum(['draft', 'submitted', 'under_review', 'approved', 'rejected', 'needs_changes']),
   "reviewer_id": zod.string().nullish(),
   "reviewer_name": zod.string().nullish(),
   "review_comment": zod.string().nullish(),
@@ -568,10 +650,13 @@ export const GetReportResponse = zod.object({
   "week_start": zod.coerce.date(),
   "achievements": zod.string(),
   "completed_tasks": zod.string(),
+  "ongoing_tasks": zod.string(),
   "blockers": zod.string().nullish(),
   "next_week_plans": zod.string(),
+  "support_needed": zod.string().nullish(),
   "additional_notes": zod.string().nullish(),
-  "status": zod.enum(['draft', 'submitted', 'approved', 'rejected', 'needs_changes']),
+  "overall_progress": zod.number(),
+  "status": zod.enum(['draft', 'submitted', 'under_review', 'approved', 'rejected', 'needs_changes']),
   "reviewer_id": zod.string().nullish(),
   "reviewer_name": zod.string().nullish(),
   "review_comment": zod.string().nullish(),
@@ -593,13 +678,20 @@ export const UpdateReportParams = zod.object({
 
 
 
+export const updateReportBodyOverallProgressMin = 0;
+export const updateReportBodyOverallProgressMax = 100;
+
+
 
 export const UpdateReportBody = zod.object({
   "achievements": zod.string().min(1).optional(),
   "completed_tasks": zod.string().min(1).optional(),
+  "ongoing_tasks": zod.string().min(1).optional(),
   "blockers": zod.string().optional(),
   "next_week_plans": zod.string().min(1).optional(),
-  "additional_notes": zod.string().optional()
+  "support_needed": zod.string().optional(),
+  "additional_notes": zod.string().optional(),
+  "overall_progress": zod.number().min(updateReportBodyOverallProgressMin).max(updateReportBodyOverallProgressMax).optional()
 })
 
 export const UpdateReportResponse = zod.object({
@@ -612,10 +704,13 @@ export const UpdateReportResponse = zod.object({
   "week_start": zod.coerce.date(),
   "achievements": zod.string(),
   "completed_tasks": zod.string(),
+  "ongoing_tasks": zod.string(),
   "blockers": zod.string().nullish(),
   "next_week_plans": zod.string(),
+  "support_needed": zod.string().nullish(),
   "additional_notes": zod.string().nullish(),
-  "status": zod.enum(['draft', 'submitted', 'approved', 'rejected', 'needs_changes']),
+  "overall_progress": zod.number(),
+  "status": zod.enum(['draft', 'submitted', 'under_review', 'approved', 'rejected', 'needs_changes']),
   "reviewer_id": zod.string().nullish(),
   "reviewer_name": zod.string().nullish(),
   "review_comment": zod.string().nullish(),
@@ -656,10 +751,47 @@ export const SubmitReportResponse = zod.object({
   "week_start": zod.coerce.date(),
   "achievements": zod.string(),
   "completed_tasks": zod.string(),
+  "ongoing_tasks": zod.string(),
   "blockers": zod.string().nullish(),
   "next_week_plans": zod.string(),
+  "support_needed": zod.string().nullish(),
   "additional_notes": zod.string().nullish(),
-  "status": zod.enum(['draft', 'submitted', 'approved', 'rejected', 'needs_changes']),
+  "overall_progress": zod.number(),
+  "status": zod.enum(['draft', 'submitted', 'under_review', 'approved', 'rejected', 'needs_changes']),
+  "reviewer_id": zod.string().nullish(),
+  "reviewer_name": zod.string().nullish(),
+  "review_comment": zod.string().nullish(),
+  "reviewed_at": zod.string().nullish(),
+  "submitted_at": zod.string().nullish(),
+  "created_at": zod.string(),
+  "updated_at": zod.string()
+})
+
+
+/**
+ * @summary Mark a submitted report as under review
+ */
+export const ReviewReportParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const ReviewReportResponse = zod.object({
+  "id": zod.string(),
+  "employee_id": zod.string(),
+  "employee_name": zod.string(),
+  "employee_photo": zod.string().nullish(),
+  "department_id": zod.string().nullish(),
+  "department_name": zod.string().nullish(),
+  "week_start": zod.coerce.date(),
+  "achievements": zod.string(),
+  "completed_tasks": zod.string(),
+  "ongoing_tasks": zod.string(),
+  "blockers": zod.string().nullish(),
+  "next_week_plans": zod.string(),
+  "support_needed": zod.string().nullish(),
+  "additional_notes": zod.string().nullish(),
+  "overall_progress": zod.number(),
+  "status": zod.enum(['draft', 'submitted', 'under_review', 'approved', 'rejected', 'needs_changes']),
   "reviewer_id": zod.string().nullish(),
   "reviewer_name": zod.string().nullish(),
   "review_comment": zod.string().nullish(),
@@ -691,10 +823,13 @@ export const ApproveReportResponse = zod.object({
   "week_start": zod.coerce.date(),
   "achievements": zod.string(),
   "completed_tasks": zod.string(),
+  "ongoing_tasks": zod.string(),
   "blockers": zod.string().nullish(),
   "next_week_plans": zod.string(),
+  "support_needed": zod.string().nullish(),
   "additional_notes": zod.string().nullish(),
-  "status": zod.enum(['draft', 'submitted', 'approved', 'rejected', 'needs_changes']),
+  "overall_progress": zod.number(),
+  "status": zod.enum(['draft', 'submitted', 'under_review', 'approved', 'rejected', 'needs_changes']),
   "reviewer_id": zod.string().nullish(),
   "reviewer_name": zod.string().nullish(),
   "review_comment": zod.string().nullish(),
@@ -726,10 +861,13 @@ export const RejectReportResponse = zod.object({
   "week_start": zod.coerce.date(),
   "achievements": zod.string(),
   "completed_tasks": zod.string(),
+  "ongoing_tasks": zod.string(),
   "blockers": zod.string().nullish(),
   "next_week_plans": zod.string(),
+  "support_needed": zod.string().nullish(),
   "additional_notes": zod.string().nullish(),
-  "status": zod.enum(['draft', 'submitted', 'approved', 'rejected', 'needs_changes']),
+  "overall_progress": zod.number(),
+  "status": zod.enum(['draft', 'submitted', 'under_review', 'approved', 'rejected', 'needs_changes']),
   "reviewer_id": zod.string().nullish(),
   "reviewer_name": zod.string().nullish(),
   "review_comment": zod.string().nullish(),
@@ -761,10 +899,13 @@ export const RequestReportChangesResponse = zod.object({
   "week_start": zod.coerce.date(),
   "achievements": zod.string(),
   "completed_tasks": zod.string(),
+  "ongoing_tasks": zod.string(),
   "blockers": zod.string().nullish(),
   "next_week_plans": zod.string(),
+  "support_needed": zod.string().nullish(),
   "additional_notes": zod.string().nullish(),
-  "status": zod.enum(['draft', 'submitted', 'approved', 'rejected', 'needs_changes']),
+  "overall_progress": zod.number(),
+  "status": zod.enum(['draft', 'submitted', 'under_review', 'approved', 'rejected', 'needs_changes']),
   "reviewer_id": zod.string().nullish(),
   "reviewer_name": zod.string().nullish(),
   "review_comment": zod.string().nullish(),
@@ -1079,10 +1220,13 @@ export const GetManagementPendingReviewsResponse = zod.object({
   "week_start": zod.coerce.date(),
   "achievements": zod.string(),
   "completed_tasks": zod.string(),
+  "ongoing_tasks": zod.string(),
   "blockers": zod.string().nullish(),
   "next_week_plans": zod.string(),
+  "support_needed": zod.string().nullish(),
   "additional_notes": zod.string().nullish(),
-  "status": zod.enum(['draft', 'submitted', 'approved', 'rejected', 'needs_changes']),
+  "overall_progress": zod.number(),
+  "status": zod.enum(['draft', 'submitted', 'under_review', 'approved', 'rejected', 'needs_changes']),
   "reviewer_id": zod.string().nullish(),
   "reviewer_name": zod.string().nullish(),
   "review_comment": zod.string().nullish(),

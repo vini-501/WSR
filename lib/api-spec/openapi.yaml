@@ -299,7 +299,18 @@ paths:
           in: query
           schema:
             type: string
-            enum: [active, inactive, on_leave]
+            enum: [active, inactive, on_leave, resigned]
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [name, employee_id, role, status, joining_date, department_name]
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
         - name: page
           in: query
           schema:
@@ -335,6 +346,52 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Employee"
+
+  /employees/import:
+    post:
+      operationId: importEmployees
+      tags: [employees]
+      summary: Bulk import employees from CSV
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                csvData:
+                  type: string
+              required: [csvData]
+      responses:
+        "200":
+          description: Import result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  count:
+                    type: integer
+                  message:
+                    type: string
+                required: [success, count, message]
+
+  /employees/export:
+    get:
+      operationId: exportEmployees
+      tags: [employees]
+      summary: Bulk export employees to CSV
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Exported CSV file
+          content:
+            text/csv:
+              schema:
+                type: string
 
   /employees/{id}:
     get:
@@ -392,6 +449,11 @@ paths:
           required: true
           schema:
             type: string
+        - name: permanent
+          in: query
+          schema:
+            type: boolean
+            default: false
       responses:
         "200":
           description: Deleted
@@ -424,7 +486,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [draft, submitted, approved, rejected, needs_changes]
+            enum: [draft, submitted, under_review, approved, rejected, needs_changes]
         - name: week_start
           in: query
           schema:
@@ -543,6 +605,26 @@ paths:
       responses:
         "200":
           description: Submitted report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+
+  /reports/{id}/under-review:
+    post:
+      operationId: reviewReport
+      tags: [reports]
+      summary: Mark a submitted report as under review
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Report status updated to under review
           content:
             application/json:
               schema:
@@ -1032,9 +1114,19 @@ components:
           type: ["string", "null"]
         status:
           type: string
-          enum: [active, inactive, on_leave]
+          enum: [active, inactive, on_leave, resigned]
         joining_date:
           type: ["string", "null"]
+        designation:
+          type: ["string", "null"]
+        employment_type:
+          type: ["string", "null"]
+        timezone:
+          type: ["string", "null"]
+        work_location:
+          type: ["string", "null"]
+        weekly_reporting_frequency:
+          type: ["integer", "null"]
         created_at:
           type: string
       required: [id, auth_user_id, name, email, role, status, created_at]
@@ -1328,9 +1420,19 @@ components:
           type: ["string", "null"]
         status:
           type: string
-          enum: [active, inactive, on_leave]
+          enum: [active, inactive, on_leave, resigned]
         joining_date:
           type: ["string", "null"]
+        designation:
+          type: ["string", "null"]
+        employment_type:
+          type: ["string", "null"]
+        timezone:
+          type: ["string", "null"]
+        work_location:
+          type: ["string", "null"]
+        weekly_reporting_frequency:
+          type: ["integer", "null"]
         created_at:
           type: string
         updated_at:
@@ -1376,10 +1478,20 @@ components:
           type: string
         status:
           type: string
-          enum: [active, inactive, on_leave]
+          enum: [active, inactive, on_leave, resigned]
         joining_date:
           type: string
           format: date
+        designation:
+          type: string
+        employment_type:
+          type: string
+        timezone:
+          type: string
+        work_location:
+          type: string
+        weekly_reporting_frequency:
+          type: integer
         send_invite:
           type: boolean
           default: false
@@ -1404,10 +1516,20 @@ components:
           type: string
         status:
           type: string
-          enum: [active, inactive, on_leave]
+          enum: [active, inactive, on_leave, resigned]
         joining_date:
           type: string
           format: date
+        designation:
+          type: string
+        employment_type:
+          type: string
+        timezone:
+          type: string
+        work_location:
+          type: string
+        weekly_reporting_frequency:
+          type: integer
 
     # ── Reports ──
     Report:
@@ -1432,15 +1554,21 @@ components:
           type: string
         completed_tasks:
           type: string
+        ongoing_tasks:
+          type: string
         blockers:
           type: ["string", "null"]
         next_week_plans:
           type: string
+        support_needed:
+          type: ["string", "null"]
         additional_notes:
           type: ["string", "null"]
+        overall_progress:
+          type: integer
         status:
           type: string
-          enum: [draft, submitted, approved, rejected, needs_changes]
+          enum: [draft, submitted, under_review, approved, rejected, needs_changes]
         reviewer_id:
           type: ["string", "null"]
         reviewer_name:
@@ -1463,7 +1591,9 @@ components:
           week_start,
           achievements,
           completed_tasks,
+          ongoing_tasks,
           next_week_plans,
+          overall_progress,
           status,
           created_at,
           updated_at,
@@ -1498,14 +1628,23 @@ components:
         completed_tasks:
           type: string
           minLength: 1
+        ongoing_tasks:
+          type: string
+          minLength: 1
         blockers:
           type: string
         next_week_plans:
           type: string
           minLength: 1
+        support_needed:
+          type: string
         additional_notes:
           type: string
-      required: [week_start, achievements, completed_tasks, next_week_plans]
+        overall_progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+      required: [week_start, achievements, completed_tasks, ongoing_tasks, next_week_plans]
 
     ReportUpdate:
       type: object
@@ -1516,13 +1655,22 @@ components:
         completed_tasks:
           type: string
           minLength: 1
+        ongoing_tasks:
+          type: string
+          minLength: 1
         blockers:
           type: string
         next_week_plans:
           type: string
           minLength: 1
+        support_needed:
+          type: string
         additional_notes:
           type: string
+        overall_progress:
+          type: integer
+          minimum: 0
+          maximum: 100
 
     ApprovalAction:
       type: object

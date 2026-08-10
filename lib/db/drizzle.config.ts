@@ -32,7 +32,7 @@ function getConnectionUrl(url: string): string {
 }
 
 export default defineConfig({
-  schema: join(__dirname, "./src/schema/index.ts"),
+  schema: "./src/schema/index.ts",
   dialect: "postgresql",
   dbCredentials: {
     url: getConnectionUrl(rawUrl),

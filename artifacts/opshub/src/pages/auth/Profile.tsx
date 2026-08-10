@@ -62,10 +62,10 @@ export function Profile() {
         <Card className="md:col-span-1 border-none shadow-none bg-transparent">
           <CardContent className="p-0 flex flex-col items-center text-center">
             <Avatar className="h-32 w-32 mb-4 border-4 border-background shadow-sm">
-              <AvatarImage src={profile.photo_url || undefined} alt={profile.name} />
-              <AvatarFallback className="text-4xl bg-primary/10 text-primary">{profile.name.charAt(0)}</AvatarFallback>
+              <AvatarImage src={profile.photo_url || undefined} alt={profile.name || "User"} />
+              <AvatarFallback className="text-4xl bg-primary/10 text-primary">{(profile.name || "User").charAt(0)}</AvatarFallback>
             </Avatar>
-            <h2 className="text-xl font-bold">{profile.name}</h2>
+            <h2 className="text-xl font-bold">{profile.name || "User"}</h2>
             <p className="text-muted-foreground capitalize">{profile.role.replace('_', ' ')}</p>
             <div className="mt-4 px-4 py-2 bg-muted rounded-full text-sm font-medium">
               {profile.department_name || "No Department"}

@@ -12,7 +12,7 @@ export const companySettingsTable = pgTable("company_settings", {
   id: uuid("id").primaryKey().defaultRandom(),
   company_name: text("company_name").notNull().default("Ellipsonic"),
   logo_url: text("logo_url"),
-  timezone: text("timezone").notNull().default("UTC"),
+  timezone: text("timezone").notNull().default("Asia/Kolkata (IST)"),
   reporting_deadline_day: text("reporting_deadline_day").notNull().default("Friday"),
   reporting_deadline_time: text("reporting_deadline_time").notNull().default("17:00"),
   theme: text("theme").notNull().default("system"),

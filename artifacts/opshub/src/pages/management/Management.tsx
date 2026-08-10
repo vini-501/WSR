@@ -119,14 +119,14 @@ export function Management() {
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-sm text-primary shrink-0 relative">
                         {user.employee_photo ? (
-                          <img src={user.employee_photo} alt={user.employee_name} className="w-full h-full rounded-full object-cover" />
+                          <img src={user.employee_photo} alt={user.employee_name || "System"} className="w-full h-full rounded-full object-cover" />
                         ) : (
-                          user.employee_name.charAt(0)
+                          (user.employee_name || "System").charAt(0)
                         )}
                         {idx === 0 && <span className="absolute -top-2 -right-2 bg-amber-100 p-1 rounded-full text-amber-600"><Target className="h-3 w-3" /></span>}
                       </div>
                       <div>
-                        <p className="text-sm font-medium leading-none">{user.employee_name}</p>
+                        <p className="text-sm font-medium leading-none">{user.employee_name || "System"}</p>
                         <p className="text-xs text-muted-foreground mt-1">{user.department_name}</p>
                       </div>
                     </div>

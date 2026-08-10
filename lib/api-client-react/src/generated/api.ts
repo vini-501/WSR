@@ -30,6 +30,7 @@ import type {
   DashboardChartData,
   DashboardStats,
   DeadlineItem,
+  DeleteEmployeeParams,
   Department,
   DepartmentComparisonItem,
   DepartmentCompletionItem,
@@ -49,6 +50,8 @@ import type {
   GetTopContributorsParams,
   GetWeeklyTrendsParams,
   HealthStatus,
+  ImportEmployees200,
+  ImportEmployeesBody,
   ListActivityLogsParams,
   ListAuditLogsParams,
   ListDepartmentsParams,
@@ -1174,6 +1177,154 @@ export const useCreateEmployee = <TError = ErrorType<unknown>,
       return useMutation(getCreateEmployeeMutationOptions(options));
     }
 
+export const getImportEmployeesUrl = () => {
+
+
+
+
+  return `/api/employees/import`
+}
+
+/**
+ * @summary Bulk import employees from CSV
+ */
+export const importEmployees = async (importEmployeesBody: ImportEmployeesBody, options?: RequestInit): Promise<ImportEmployees200> => {
+
+  return customFetch<ImportEmployees200>(getImportEmployeesUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(importEmployeesBody)
+  }
+);}
+
+
+
+
+
+export const getImportEmployeesMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importEmployees>>, TError,{data: BodyType<ImportEmployeesBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof importEmployees>>, TError,{data: BodyType<ImportEmployeesBody>}, TContext> => {
+
+const mutationKey = ['importEmployees'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importEmployees>>, {data: BodyType<ImportEmployeesBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  importEmployees(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportEmployeesMutationResult = NonNullable<Awaited<ReturnType<typeof importEmployees>>>
+    export type ImportEmployeesMutationBody = BodyType<ImportEmployeesBody>
+    export type ImportEmployeesMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Bulk import employees from CSV
+ */
+export const useImportEmployees = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importEmployees>>, TError,{data: BodyType<ImportEmployeesBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof importEmployees>>,
+        TError,
+        {data: BodyType<ImportEmployeesBody>},
+        TContext
+      > => {
+      return useMutation(getImportEmployeesMutationOptions(options));
+    }
+
+export const getExportEmployeesUrl = () => {
+
+
+
+
+  return `/api/employees/export`
+}
+
+/**
+ * @summary Bulk export employees to CSV
+ */
+export const exportEmployees = async ( options?: RequestInit): Promise<string> => {
+
+  return customFetch<string>(getExportEmployeesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getExportEmployeesQueryKey = () => {
+    return [
+    `/api/employees/export`
+    ] as const;
+    }
+
+
+export const getExportEmployeesQueryOptions = <TData = Awaited<ReturnType<typeof exportEmployees>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportEmployees>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getExportEmployeesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof exportEmployees>>> = ({ signal }) => exportEmployees({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof exportEmployees>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ExportEmployeesQueryResult = NonNullable<Awaited<ReturnType<typeof exportEmployees>>>
+export type ExportEmployeesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Bulk export employees to CSV
+ */
+
+export function useExportEmployees<TData = Awaited<ReturnType<typeof exportEmployees>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportEmployees>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getExportEmployeesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getGetEmployeeUrl = (id: string,) => {
 
 
@@ -1323,20 +1474,29 @@ export const useUpdateEmployee = <TError = ErrorType<unknown>,
       return useMutation(getUpdateEmployeeMutationOptions(options));
     }
 
-export const getDeleteEmployeeUrl = (id: string,) => {
+export const getDeleteEmployeeUrl = (id: string,
+    params?: DeleteEmployeeParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/employees/${id}`
+  return stringifiedParams.length > 0 ? `/api/employees/${id}?${stringifiedParams}` : `/api/employees/${id}`
 }
 
 /**
  * @summary Soft delete an employee
  */
-export const deleteEmployee = async (id: string, options?: RequestInit): Promise<SuccessResponse> => {
+export const deleteEmployee = async (id: string,
+    params?: DeleteEmployeeParams, options?: RequestInit): Promise<SuccessResponse> => {
 
-  return customFetch<SuccessResponse>(getDeleteEmployeeUrl(id),
+  return customFetch<SuccessResponse>(getDeleteEmployeeUrl(id,params),
   {
     ...options,
     method: 'DELETE'
@@ -1350,8 +1510,8 @@ export const deleteEmployee = async (id: string, options?: RequestInit): Promise
 
 
 export const getDeleteEmployeeMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteEmployee>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof deleteEmployee>>, TError,{id: string}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteEmployee>>, TError,{id: string;params?: DeleteEmployeeParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteEmployee>>, TError,{id: string;params?: DeleteEmployeeParams}, TContext> => {
 
 const mutationKey = ['deleteEmployee'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -1363,10 +1523,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteEmployee>>, {id: string}> = (props) => {
-          const {id} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteEmployee>>, {id: string;params?: DeleteEmployeeParams}> = (props) => {
+          const {id,params} = props ?? {};
 
-          return  deleteEmployee(id,requestOptions)
+          return  deleteEmployee(id,params,requestOptions)
         }
 
 
@@ -1384,11 +1544,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Soft delete an employee
  */
 export const useDeleteEmployee = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteEmployee>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteEmployee>>, TError,{id: string;params?: DeleteEmployeeParams}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof deleteEmployee>>,
         TError,
-        {id: string},
+        {id: string;params?: DeleteEmployeeParams},
         TContext
       > => {
       return useMutation(getDeleteEmployeeMutationOptions(options));
@@ -1838,6 +1998,77 @@ export const useSubmitReport = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getSubmitReportMutationOptions(options));
+    }
+
+export const getReviewReportUrl = (id: string,) => {
+
+
+
+
+  return `/api/reports/${id}/under-review`
+}
+
+/**
+ * @summary Mark a submitted report as under review
+ */
+export const reviewReport = async (id: string, options?: RequestInit): Promise<Report> => {
+
+  return customFetch<Report>(getReviewReportUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getReviewReportMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewReport>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reviewReport>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['reviewReport'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reviewReport>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  reviewReport(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReviewReportMutationResult = NonNullable<Awaited<ReturnType<typeof reviewReport>>>
+
+    export type ReviewReportMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Mark a submitted report as under review
+ */
+export const useReviewReport = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewReport>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof reviewReport>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getReviewReportMutationOptions(options));
     }
 
 export const getApproveReportUrl = (id: string,) => {

@@ -11,8 +11,16 @@ export interface ReportUpdate {
   achievements?: string;
   /** @minLength 1 */
   completed_tasks?: string;
+  /** @minLength 1 */
+  ongoing_tasks?: string;
   blockers?: string;
   /** @minLength 1 */
   next_week_plans?: string;
+  support_needed?: string;
   additional_notes?: string;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  overall_progress?: number;
 }

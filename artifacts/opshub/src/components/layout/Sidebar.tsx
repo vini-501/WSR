@@ -7,8 +7,11 @@ import {
   FileText, 
   Briefcase, 
   BarChart3, 
+  Sparkles,
+  Zap,
   Settings, 
   Bell, 
+  Mail,
   Activity, 
   ShieldAlert,
   LogOut
@@ -28,7 +31,10 @@ export function Sidebar() {
     { name: "Reports", href: "/reports", icon: FileText, roles: ['admin', 'management', 'department_head', 'employee'] },
     { name: "Management", href: "/management", icon: Briefcase, roles: ['admin', 'management'] },
     { name: "Analytics", href: "/analytics", icon: BarChart3, roles: ['admin', 'management'] },
+    { name: "AI Insights", href: "/ai-insights", icon: Sparkles, roles: ['admin', 'management', 'department_head'] },
+    { name: "Automations", href: "/automations", icon: Zap, roles: ['admin', 'management'] },
     { name: "Notifications", href: "/notifications", icon: Bell, roles: ['admin', 'management', 'department_head', 'employee'] },
+    { name: "Email Logs", href: "/email-logs", icon: Mail, roles: ['admin', 'management'] },
     { name: "Activity Logs", href: "/activity-logs", icon: Activity, roles: ['admin', 'management'] },
     { name: "Audit Logs", href: "/audit-logs", icon: ShieldAlert, roles: ['admin'] },
   ];

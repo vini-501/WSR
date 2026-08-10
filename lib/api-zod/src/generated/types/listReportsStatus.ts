@@ -12,6 +12,7 @@ export type ListReportsStatus = typeof ListReportsStatus[keyof typeof ListReport
 export const ListReportsStatus = {
   draft: 'draft',
   submitted: 'submitted',
+  under_review: 'under_review',
   approved: 'approved',
   rejected: 'rejected',
   needs_changes: 'needs_changes',

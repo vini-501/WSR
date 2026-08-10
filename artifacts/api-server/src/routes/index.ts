@@ -11,6 +11,9 @@ import auditLogsRouter from "./auditLogs";
 import analyticsRouter from "./analytics";
 import managementRouter from "./management";
 import settingsRouter from "./settings";
+import emailRouter from "./email";
+import aiRouter from "./ai";
+import workflowsRouter from "./workflows";
 
 const router: IRouter = Router();
 
@@ -26,5 +29,8 @@ router.use(auditLogsRouter);
 router.use(analyticsRouter);
 router.use(managementRouter);
 router.use(settingsRouter);
+router.use(emailRouter);
+router.use(aiRouter);
+router.use(workflowsRouter);
 
 export default router;

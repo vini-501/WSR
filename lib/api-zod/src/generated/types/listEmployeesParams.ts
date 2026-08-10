@@ -6,6 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ListEmployeesRole } from './listEmployeesRole';
+import type { ListEmployeesSortBy } from './listEmployeesSortBy';
+import type { ListEmployeesSortOrder } from './listEmployeesSortOrder';
 import type { ListEmployeesStatus } from './listEmployeesStatus';
 
 export type ListEmployeesParams = {
@@ -13,6 +15,8 @@ search?: string;
 department_id?: string;
 role?: ListEmployeesRole;
 status?: ListEmployeesStatus;
+sortBy?: ListEmployeesSortBy;
+sortOrder?: ListEmployeesSortOrder;
 page?: number;
 limit?: number;
 };

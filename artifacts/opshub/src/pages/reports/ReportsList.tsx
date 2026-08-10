@@ -46,12 +46,12 @@ export function ReportsList() {
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
             {row.original.employee_photo ? (
-              <img src={row.original.employee_photo} alt={row.original.employee_name} className="w-full h-full rounded-full object-cover" />
+              <img src={row.original.employee_photo} alt={row.original.employee_name || "System"} className="w-full h-full rounded-full object-cover" />
             ) : (
-              <span className="text-[10px] font-medium text-primary">{row.original.employee_name.charAt(0)}</span>
+              <span className="text-[10px] font-medium text-primary">{(row.original.employee_name || "System").charAt(0)}</span>
             )}
           </div>
-          <span className="font-medium">{row.original.employee_name}</span>
+          <span className="font-medium">{row.original.employee_name || "System"}</span>
         </div>
       ),
     },
@@ -66,17 +66,34 @@ export function ReportsList() {
       cell: ({ row }: any) => format(new Date(row.original.week_start), "MMM d, yyyy"),
     },
     {
+      accessorKey: "overall_progress",
+      header: "Progress",
+      cell: ({ row }: any) => (
+        <div className="flex items-center gap-2">
+          <div className="w-12 bg-secondary rounded-full h-1.5 shrink-0">
+            <div 
+              className="bg-primary h-1.5 rounded-full" 
+              style={{ width: `${row.original.overall_progress ?? 0}%` }}
+            />
+          </div>
+          <span className="text-xs font-medium">{row.original.overall_progress ?? 0}%</span>
+        </div>
+      ),
+    },
+    {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }: any) => {
         const variants: any = { 
           draft: 'outline', 
           submitted: 'default', 
+          under_review: 'default',
           approved: 'default', 
           rejected: 'destructive',
           needs_changes: 'secondary'
         };
         const colors: any = {
+          under_review: 'bg-blue-500 hover:bg-blue-600 text-white',
           approved: 'bg-emerald-500 hover:bg-emerald-600',
           needs_changes: 'bg-amber-500 hover:bg-amber-600 text-white'
         };
@@ -168,6 +185,7 @@ export function ReportsList() {
             <SelectItem value="all">All Statuses</SelectItem>
             <SelectItem value="draft">Draft</SelectItem>
             <SelectItem value="submitted">Submitted</SelectItem>
+            <SelectItem value="under_review">Under Review</SelectItem>
             <SelectItem value="approved">Approved</SelectItem>
             <SelectItem value="needs_changes">Needs Changes</SelectItem>
             <SelectItem value="rejected">Rejected</SelectItem>

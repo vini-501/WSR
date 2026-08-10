@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and, isNull, ilike, sql, count } from "drizzle-orm";
+import { eq, and, isNull, ilike, sql, count, inArray } from "drizzle-orm";
 import {
   db,
   departmentsTable,
@@ -8,6 +8,7 @@ import {
 import { requireAuth } from "../middlewares/auth";
 import { requireRole } from "../middlewares/rbac";
 import { logActivity, logAudit } from "../lib/activityLogger";
+import { notifyManagersAndAdmins, notifyDepartmentMembers } from "../lib/notifications";
 
 const router: IRouter = Router();
 
@@ -36,38 +37,44 @@ router.get("/departments", requireAuth, async (req, res): Promise<void> => {
     .limit(limitNum)
     .offset(offset);
 
-  // Fetch head names and employee counts
-  const enriched = await Promise.all(
-    depts.map(async (dept) => {
-      let head_name: string | null = null;
-      if (dept.head_id) {
-        const [head] = await db
-          .select({ name: employeesTable.name })
-          .from(employeesTable)
-          .where(eq(employeesTable.id, dept.head_id))
-          .limit(1);
-        head_name = head?.name ?? null;
-      }
+  const deptIds = depts.map(d => d.id);
+  const headIds = depts.map(d => d.head_id).filter((id): id is string => !!id);
 
-      const [{ empCount }] = await db
-        .select({ empCount: count() })
-        .from(employeesTable)
-        .where(
-          and(
-            eq(employeesTable.department_id, dept.id),
-            isNull(employeesTable.deleted_at)
-          )
-        );
+  const headMap = new Map<string, string>();
+  const countMap = new Map<string, number>();
 
-      return {
-        ...dept,
-        head_name,
-        employee_count: Number(empCount),
-        created_at: dept.created_at.toISOString(),
-        updated_at: dept.updated_at.toISOString(),
-      };
-    })
-  );
+  if (headIds.length > 0) {
+    const heads = await db
+      .select({ id: employeesTable.id, name: employeesTable.name })
+      .from(employeesTable)
+      .where(inArray(employeesTable.id, headIds));
+    heads.forEach(h => headMap.set(h.id, h.name));
+  }
+
+  if (deptIds.length > 0) {
+    const empCounts = await db
+      .select({
+        department_id: employeesTable.department_id,
+        empCount: count(),
+      })
+      .from(employeesTable)
+      .where(
+        and(
+          inArray(employeesTable.department_id, deptIds),
+          isNull(employeesTable.deleted_at)
+        )
+      )
+      .groupBy(employeesTable.department_id);
+    empCounts.forEach(c => c.department_id && countMap.set(c.department_id, Number(c.empCount)));
+  }
+
+  const enriched = depts.map((dept) => ({
+    ...dept,
+    head_name: dept.head_id ? (headMap.get(dept.head_id) ?? null) : null,
+    employee_count: countMap.get(dept.id) ?? 0,
+    created_at: dept.created_at.toISOString(),
+    updated_at: dept.updated_at.toISOString(),
+  }));
 
   res.json({
     data: enriched,
@@ -123,6 +130,13 @@ router.post(
         operation: "INSERT",
         recordId: dept.id,
         newValues: dept,
+      }),
+      notifyManagersAndAdmins({
+        type: "announcement",
+        title: "New Department Created",
+        message: `Department "${dept.name}" has been successfully created.`,
+        entityType: "department",
+        entityId: dept.id,
       }),
     ]);
 
@@ -225,6 +239,20 @@ router.put(
         oldValues: existing,
         newValues: updated,
       }),
+      notifyManagersAndAdmins({
+        type: "announcement",
+        title: "Department Updated",
+        message: `Department "${updated.name}" details have been updated.`,
+        entityType: "department",
+        entityId: id,
+      }),
+      notifyDepartmentMembers(id, {
+        type: "announcement",
+        title: "Department Information Updated",
+        message: `Settings and information for department "${updated.name}" have been updated.`,
+        entityType: "department",
+        entityId: id,
+      }),
     ]);
 
     res.json({
@@ -255,10 +283,36 @@ router.delete(
       return;
     }
 
+    // Check if there are active employees in this department
+    const [activeEmployees] = await db
+      .select({ count: count() })
+      .from(employeesTable)
+      .where(
+        and(
+          eq(employeesTable.department_id, id),
+          eq(employeesTable.status, "active"),
+          isNull(employeesTable.deleted_at)
+        )
+      );
+
+    if (activeEmployees && Number(activeEmployees.count) > 0) {
+      res.status(400).json({
+        error: "Cannot delete department with active employees. Please reassign or deactivate employees first.",
+      });
+      return;
+    }
+
+    // Soft delete the department
     await db
       .update(departmentsTable)
-      .set({ deleted_at: new Date() })
+      .set({ deleted_at: new Date(), head_id: null })
       .where(eq(departmentsTable.id, id));
+
+    // Dissociate inactive/on-leave employees
+    await db
+      .update(employeesTable)
+      .set({ department_id: null })
+      .where(eq(employeesTable.department_id, id));
 
     await Promise.all([
       logActivity({

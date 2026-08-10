@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and, isNull, count, sql, desc } from "drizzle-orm";
+import { eq, and, isNull, count, sql, desc, inArray } from "drizzle-orm";
 import { db, employeesTable, departmentsTable, weeklyReportsTable, activityLogsTable } from "@workspace/db";
 import { requireAuth } from "../middlewares/auth";
 import { MANAGEMENT_AND_ADMIN } from "../middlewares/rbac";
@@ -28,15 +28,33 @@ router.get("/management/summary", requireAuth, MANAGEMENT_AND_ADMIN, async (req,
 
   // Department on track / behind
   const depts = await db.select().from(departmentsTable).where(and(isNull(departmentsTable.deleted_at), eq(departmentsTable.status, "active")));
+  const deptIds = depts.map(d => d.id);
+  
   let departments_on_track = 0;
   let departments_behind = 0;
 
-  for (const dept of depts) {
-    const [{ empCount }] = await db.select({ empCount: count() }).from(employeesTable).where(and(eq(employeesTable.department_id, dept.id), isNull(employeesTable.deleted_at)));
-    const [{ submittedCount }] = await db.select({ submittedCount: count() }).from(weeklyReportsTable).where(and(eq(weeklyReportsTable.department_id, dept.id), eq(weeklyReportsTable.week_start, weekStart), isNull(weeklyReportsTable.deleted_at), sql`${weeklyReportsTable.status} != 'draft'`));
-    const pct = Number(empCount) > 0 ? (Number(submittedCount) / Number(empCount)) : 0;
-    if (pct >= 0.8) departments_on_track++;
-    else departments_behind++;
+  if (deptIds.length > 0) {
+    const empCounts = await db
+      .select({ department_id: employeesTable.department_id, empCount: count() })
+      .from(employeesTable)
+      .where(and(inArray(employeesTable.department_id, deptIds), isNull(employeesTable.deleted_at)))
+      .groupBy(employeesTable.department_id);
+    const empCountsMap = new Map(empCounts.filter(c => c.department_id !== null).map(c => [c.department_id as string, Number(c.empCount)]));
+
+    const subCounts = await db
+      .select({ department_id: weeklyReportsTable.department_id, submittedCount: count() })
+      .from(weeklyReportsTable)
+      .where(and(inArray(weeklyReportsTable.department_id, deptIds), eq(weeklyReportsTable.week_start, weekStart), isNull(weeklyReportsTable.deleted_at), sql`${weeklyReportsTable.status} != 'draft'`))
+      .groupBy(weeklyReportsTable.department_id);
+    const subCountsMap = new Map(subCounts.filter(c => c.department_id !== null).map(c => [c.department_id as string, Number(c.submittedCount)]));
+
+    for (const dept of depts) {
+      const empCount = empCountsMap.get(dept.id) ?? 0;
+      const submittedCount = subCountsMap.get(dept.id) ?? 0;
+      const pct = empCount > 0 ? (submittedCount / empCount) : 0;
+      if (pct >= 0.8) departments_on_track++;
+      else departments_behind++;
+    }
   }
 
   // Recent approvals
@@ -47,18 +65,25 @@ router.get("/management/summary", requireAuth, MANAGEMENT_AND_ADMIN, async (req,
     .orderBy(desc(activityLogsTable.created_at))
     .limit(5);
 
-  const recent_approvals = await Promise.all(
-    recentLogs.map(async (log) => {
-      let user_name = "System";
-      let user_photo: string | null = null;
-      if (log.user_id) {
-        const [emp] = await db.select({ name: employeesTable.name, photo_url: employeesTable.photo_url }).from(employeesTable).where(eq(employeesTable.id, log.user_id)).limit(1);
-        user_name = emp?.name ?? "Unknown";
-        user_photo = emp?.photo_url ?? null;
-      }
-      return { id: log.id, user_name, user_photo, action: log.action, entity_type: log.entity_type ?? "", entity_id: log.entity_id ?? "", description: log.description, created_at: log.created_at.toISOString() };
-    })
-  );
+  const logUserIds = Array.from(new Set(recentLogs.map(log => log.user_id).filter((id): id is string => !!id)));
+  const logUsers = logUserIds.length > 0
+    ? await db.select({ id: employeesTable.id, name: employeesTable.name, photo_url: employeesTable.photo_url }).from(employeesTable).where(inArray(employeesTable.id, logUserIds))
+    : [];
+  const logUserMap = new Map(logUsers.map(u => [u.id, u]));
+
+  const recent_approvals = recentLogs.map((log) => {
+    const emp = log.user_id ? logUserMap.get(log.user_id) : null;
+    return {
+      id: log.id,
+      user_name: emp?.name ?? "System",
+      user_photo: emp?.photo_url ?? null,
+      action: log.action,
+      entity_type: log.entity_type ?? "",
+      entity_id: log.entity_id ?? "",
+      description: log.description,
+      created_at: log.created_at.toISOString(),
+    };
+  });
 
   res.json({
     total_reports_this_week: thisWeek,
@@ -80,35 +105,53 @@ router.get("/management/department-completion", requireAuth, MANAGEMENT_AND_ADMI
   const weekStart = monday.toISOString().split("T")[0];
 
   const depts = await db.select().from(departmentsTable).where(and(isNull(departmentsTable.deleted_at), eq(departmentsTable.status, "active")));
+  const deptIds = depts.map(d => d.id);
+  const headIds = depts.map(d => d.head_id).filter((id): id is string => !!id);
 
-  const result = await Promise.all(
-    depts.map(async (dept) => {
-      let head_name: string | null = null;
-      if (dept.head_id) {
-        const [head] = await db.select({ name: employeesTable.name }).from(employeesTable).where(eq(employeesTable.id, dept.head_id)).limit(1);
-        head_name = head?.name ?? null;
-      }
+  const headUsers = headIds.length > 0
+    ? await db.select({ id: employeesTable.id, name: employeesTable.name }).from(employeesTable).where(inArray(employeesTable.id, headIds))
+    : [];
+  const headMap = new Map(headUsers.map(h => [h.id, h.name]));
 
-      const [{ empCount }] = await db.select({ empCount: count() }).from(employeesTable).where(and(eq(employeesTable.department_id, dept.id), isNull(employeesTable.deleted_at)));
-      const [{ submitted }] = await db.select({ submitted: count() }).from(weeklyReportsTable).where(and(eq(weeklyReportsTable.department_id, dept.id), eq(weeklyReportsTable.week_start, weekStart), isNull(weeklyReportsTable.deleted_at), sql`${weeklyReportsTable.status} != 'draft'`));
-      const [{ approved }] = await db.select({ approved: count() }).from(weeklyReportsTable).where(and(eq(weeklyReportsTable.department_id, dept.id), eq(weeklyReportsTable.week_start, weekStart), eq(weeklyReportsTable.status, "approved"), isNull(weeklyReportsTable.deleted_at)));
-      const [{ pending }] = await db.select({ pending: count() }).from(weeklyReportsTable).where(and(eq(weeklyReportsTable.department_id, dept.id), eq(weeklyReportsTable.week_start, weekStart), eq(weeklyReportsTable.status, "submitted"), isNull(weeklyReportsTable.deleted_at)));
-      const [{ late }] = await db.select({ late: count() }).from(weeklyReportsTable).where(and(eq(weeklyReportsTable.department_id, dept.id), isNull(weeklyReportsTable.deleted_at), sql`${weeklyReportsTable.submitted_at} > (${weeklyReportsTable.week_start}::date + INTERVAL '4 days' + INTERVAL '17 hours')`));
+  // Bulk queries for counts grouped by department_id
+  const empCountsMap = new Map<string, number>();
+  const submittedMap = new Map<string, number>();
+  const approvedMap = new Map<string, number>();
+  const pendingMap = new Map<string, number>();
+  const lateMap = new Map<string, number>();
 
-      const empTotal = Number(empCount);
-      return {
-        department_id: dept.id,
-        department_name: dept.name,
-        head_name,
-        total_employees: empTotal,
-        submitted: Number(submitted),
-        approved: Number(approved),
-        pending: Number(pending),
-        late: Number(late),
-        completion_pct: empTotal > 0 ? Math.round((Number(submitted) / empTotal) * 100) : 0,
-      };
-    })
-  );
+  if (deptIds.length > 0) {
+    const empCounts = await db.select({ department_id: employeesTable.department_id, c: count() }).from(employeesTable).where(and(inArray(employeesTable.department_id, deptIds), isNull(employeesTable.deleted_at))).groupBy(employeesTable.department_id);
+    empCounts.forEach(x => x.department_id && empCountsMap.set(x.department_id, Number(x.c)));
+
+    const submittedList = await db.select({ department_id: weeklyReportsTable.department_id, c: count() }).from(weeklyReportsTable).where(and(inArray(weeklyReportsTable.department_id, deptIds), eq(weeklyReportsTable.week_start, weekStart), isNull(weeklyReportsTable.deleted_at), sql`${weeklyReportsTable.status} != 'draft'`)).groupBy(weeklyReportsTable.department_id);
+    submittedList.forEach(x => x.department_id && submittedMap.set(x.department_id, Number(x.c)));
+
+    const approvedList = await db.select({ department_id: weeklyReportsTable.department_id, c: count() }).from(weeklyReportsTable).where(and(inArray(weeklyReportsTable.department_id, deptIds), eq(weeklyReportsTable.week_start, weekStart), eq(weeklyReportsTable.status, "approved"), isNull(weeklyReportsTable.deleted_at))).groupBy(weeklyReportsTable.department_id);
+    approvedList.forEach(x => x.department_id && approvedMap.set(x.department_id, Number(x.c)));
+
+    const pendingList = await db.select({ department_id: weeklyReportsTable.department_id, c: count() }).from(weeklyReportsTable).where(and(inArray(weeklyReportsTable.department_id, deptIds), eq(weeklyReportsTable.week_start, weekStart), eq(weeklyReportsTable.status, "submitted"), isNull(weeklyReportsTable.deleted_at))).groupBy(weeklyReportsTable.department_id);
+    pendingList.forEach(x => x.department_id && pendingMap.set(x.department_id, Number(x.c)));
+
+    const lateList = await db.select({ department_id: weeklyReportsTable.department_id, c: count() }).from(weeklyReportsTable).where(and(inArray(weeklyReportsTable.department_id, deptIds), isNull(weeklyReportsTable.deleted_at), sql`${weeklyReportsTable.submitted_at} > (${weeklyReportsTable.week_start}::date + INTERVAL '4 days' + INTERVAL '17 hours')`)).groupBy(weeklyReportsTable.department_id);
+    lateList.forEach(x => x.department_id && lateMap.set(x.department_id, Number(x.c)));
+  }
+
+  const result = depts.map((dept) => {
+    const empTotal = empCountsMap.get(dept.id) ?? 0;
+    const submitted = submittedMap.get(dept.id) ?? 0;
+    return {
+      department_id: dept.id,
+      department_name: dept.name,
+      head_name: dept.head_id ? (headMap.get(dept.head_id) ?? null) : null,
+      total_employees: empTotal,
+      submitted,
+      approved: approvedMap.get(dept.id) ?? 0,
+      pending: pendingMap.get(dept.id) ?? 0,
+      late: lateMap.get(dept.id) ?? 0,
+      completion_pct: empTotal > 0 ? Math.round((submitted / empTotal) * 100) : 0,
+    };
+  });
 
   res.json(result);
 });
@@ -122,28 +165,40 @@ router.get("/management/top-contributors", requireAuth, MANAGEMENT_AND_ADMIN, as
     .where(and(isNull(employeesTable.deleted_at), eq(employeesTable.status, "active")))
     .limit(50);
 
-  const withStats = await Promise.all(
-    employees.map(async (emp) => {
-      const [{ total }] = await db.select({ total: count() }).from(weeklyReportsTable).where(and(eq(weeklyReportsTable.employee_id, emp.id), isNull(weeklyReportsTable.deleted_at)));
-      const [{ approved }] = await db.select({ approved: count() }).from(weeklyReportsTable).where(and(eq(weeklyReportsTable.employee_id, emp.id), eq(weeklyReportsTable.status, "approved"), isNull(weeklyReportsTable.deleted_at)));
+  const empIds = employees.map(e => e.id);
+  const deptIds = Array.from(new Set(employees.map(e => e.department_id).filter((id): id is string => !!id)));
 
-      let department_name: string | null = null;
-      if (emp.department_id) {
-        const [dept] = await db.select({ name: departmentsTable.name }).from(departmentsTable).where(eq(departmentsTable.id, emp.department_id)).limit(1);
-        department_name = dept?.name ?? null;
-      }
+  // Bulk fetch total reports counts
+  const totalReportsMap = new Map<string, number>();
+  const approvedReportsMap = new Map<string, number>();
+  const deptNamesMap = new Map<string, string>();
 
-      return {
-        employee_id: emp.id,
-        employee_name: emp.name,
-        employee_photo: emp.photo_url,
-        department_name,
-        total_reports: Number(total),
-        streak_weeks: Math.min(Number(total), 8), // Simplified streak
-        on_time_pct: Number(total) > 0 ? Math.round((Number(approved) / Number(total)) * 100) : 0,
-      };
-    })
-  );
+  if (empIds.length > 0) {
+    const totalReports = await db.select({ employee_id: weeklyReportsTable.employee_id, c: count() }).from(weeklyReportsTable).where(and(inArray(weeklyReportsTable.employee_id, empIds), isNull(weeklyReportsTable.deleted_at))).groupBy(weeklyReportsTable.employee_id);
+    totalReports.forEach(x => totalReportsMap.set(x.employee_id, Number(x.c)));
+
+    const approvedReports = await db.select({ employee_id: weeklyReportsTable.employee_id, c: count() }).from(weeklyReportsTable).where(and(inArray(weeklyReportsTable.employee_id, empIds), eq(weeklyReportsTable.status, "approved"), isNull(weeklyReportsTable.deleted_at))).groupBy(weeklyReportsTable.employee_id);
+    approvedReports.forEach(x => approvedReportsMap.set(x.employee_id, Number(x.c)));
+  }
+
+  if (deptIds.length > 0) {
+    const depts = await db.select({ id: departmentsTable.id, name: departmentsTable.name }).from(departmentsTable).where(inArray(departmentsTable.id, deptIds));
+    depts.forEach(d => deptNamesMap.set(d.id, d.name));
+  }
+
+  const withStats = employees.map((emp) => {
+    const total = totalReportsMap.get(emp.id) ?? 0;
+    const approved = approvedReportsMap.get(emp.id) ?? 0;
+    return {
+      employee_id: emp.id,
+      employee_name: emp.name,
+      employee_photo: emp.photo_url,
+      department_name: emp.department_id ? (deptNamesMap.get(emp.department_id) ?? null) : null,
+      total_reports: total,
+      streak_weeks: Math.min(total, 8),
+      on_time_pct: total > 0 ? Math.round((approved / total) * 100) : 0,
+    };
+  });
 
   const sorted = withStats.sort((a, b) => b.total_reports - a.total_reports).slice(0, limit);
   res.json(sorted);
@@ -166,20 +221,31 @@ router.get("/management/pending-reviews", requireAuth, MANAGEMENT_AND_ADMIN, asy
     .limit(limitNum)
     .offset(offset);
 
-  const enriched = await Promise.all(reports.map(async (r) => {
-    const [emp] = await db.select({ name: employeesTable.name, photo_url: employeesTable.photo_url }).from(employeesTable).where(eq(employeesTable.id, r.employee_id)).limit(1);
-    let department_name: string | null = null;
-    if (r.department_id) {
-      const [dept] = await db.select({ name: departmentsTable.name }).from(departmentsTable).where(eq(departmentsTable.id, r.department_id)).limit(1);
-      department_name = dept?.name ?? null;
-    }
+  const empIds = Array.from(new Set(reports.map(r => r.employee_id)));
+  const deptIds = Array.from(new Set(reports.map(r => r.department_id).filter((id): id is string => !!id)));
+
+  const empMap = new Map<string, typeof employeesTable.$inferSelect>();
+  const deptMap = new Map<string, string>();
+
+  if (empIds.length > 0) {
+    const emps = await db.select().from(employeesTable).where(inArray(employeesTable.id, empIds));
+    emps.forEach(e => empMap.set(e.id, e));
+  }
+
+  if (deptIds.length > 0) {
+    const depts = await db.select({ id: departmentsTable.id, name: departmentsTable.name }).from(departmentsTable).where(inArray(departmentsTable.id, deptIds));
+    depts.forEach(d => deptMap.set(d.id, d.name));
+  }
+
+  const enriched = reports.map((r) => {
+    const emp = empMap.get(r.employee_id);
     return {
       id: r.id,
       employee_id: r.employee_id,
       employee_name: emp?.name ?? "Unknown",
       employee_photo: emp?.photo_url ?? null,
       department_id: r.department_id,
-      department_name,
+      department_name: r.department_id ? (deptMap.get(r.department_id) ?? null) : null,
       week_start: r.week_start,
       achievements: r.achievements,
       completed_tasks: r.completed_tasks,
@@ -195,7 +261,7 @@ router.get("/management/pending-reviews", requireAuth, MANAGEMENT_AND_ADMIN, asy
       created_at: r.created_at.toISOString(),
       updated_at: r.updated_at.toISOString(),
     };
-  }));
+  });
 
   res.json({
     data: enriched,

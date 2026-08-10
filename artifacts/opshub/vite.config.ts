@@ -5,34 +5,34 @@ import { defineConfig } from 'vite';
 
 import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
 
-const rawPort = process.env.PORT;
-
-if (!rawPort) {
-  throw new Error(
-    'PORT environment variable is required but was not provided.',
-  );
-}
-
+const rawPort = process.env.PORT || '5173';
 const port = Number(rawPort);
 
 if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-const basePath = process.env.BASE_PATH;
-
-if (!basePath) {
-  throw new Error(
-    'BASE_PATH environment variable is required but was not provided.',
-  );
-}
+const basePath = process.env.BASE_PATH || '/';
 
 export default defineConfig({
   base: basePath,
-  define: {
-    'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(process.env.SUPABASE_URL ?? ''),
-    'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(process.env.SUPABASE_ANON_KEY ?? ''),
-  },
+  define: (() => {
+    // SUPABASE_URL secret may be set to the dashboard URL instead of the project API URL.
+    // Derive the correct API URL from SUPABASE_DATABASE_URL which always has the right project ref.
+    let supabaseApiUrl = process.env.SUPABASE_URL ?? '';
+    if (!supabaseApiUrl.includes('.supabase.co') || supabaseApiUrl.includes('supabase.com/dashboard')) {
+      const dbUrl = process.env.SUPABASE_DATABASE_URL ?? process.env.DATABASE_URL ?? '';
+      try {
+        const host = new URL(dbUrl).hostname; // db.<ref>.supabase.co
+        const ref = host.replace('db.', '').replace('.supabase.co', '');
+        supabaseApiUrl = `https://${ref}.supabase.co`;
+      } catch { /* fall back to empty */ }
+    }
+    return {
+      'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(supabaseApiUrl),
+      'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(process.env.SUPABASE_ANON_KEY ?? ''),
+    };
+  })(),
   plugins: [
     react(),
     tailwindcss(),
@@ -75,6 +75,12 @@ export default defineConfig({
     allowedHosts: true,
     fs: {
       strict: true,
+    },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
     },
   },
   preview: {

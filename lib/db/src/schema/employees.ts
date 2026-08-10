@@ -4,6 +4,7 @@ import {
   text,
   timestamp,
   pgEnum,
+  integer,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
@@ -19,6 +20,7 @@ export const employeeStatusEnum = pgEnum("employee_status", [
   "active",
   "inactive",
   "on_leave",
+  "resigned",
 ]);
 
 export const employeesTable = pgTable("employees", {
@@ -35,6 +37,11 @@ export const employeesTable = pgTable("employees", {
   manager_id: uuid("manager_id"),
   status: employeeStatusEnum("status").notNull().default("active"),
   joining_date: text("joining_date"),
+  designation: text("designation"),
+  employment_type: text("employment_type"),
+  timezone: text("timezone"),
+  work_location: text("work_location"),
+  weekly_reporting_frequency: integer("weekly_reporting_frequency"),
   created_at: timestamp("created_at").notNull().defaultNow(),
   updated_at: timestamp("updated_at").notNull().defaultNow(),
   deleted_at: timestamp("deleted_at"),

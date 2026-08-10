@@ -35,12 +35,12 @@ export function DepartmentDetail() {
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
             {row.original.photo_url ? (
-              <img src={row.original.photo_url} alt={row.original.name} className="w-full h-full rounded-full object-cover" />
+              <img src={row.original.photo_url} alt={row.original.name || "Employee"} className="w-full h-full rounded-full object-cover" />
             ) : (
-              <span className="text-xs font-medium text-primary">{row.original.name.charAt(0)}</span>
+              <span className="text-xs font-medium text-primary">{(row.original.name || "Employee").charAt(0)}</span>
             )}
           </div>
-          <span className="font-medium">{row.original.name}</span>
+          <span className="font-medium">{row.original.name || "Employee"}</span>
         </div>
       ),
     },

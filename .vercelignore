@@ -1,0 +1,17 @@
+# Node & Build artifacts
+node_modules
+dist
+.tsbuildinfo
+*.log
+
+# Git & Replit configuration
+.git
+.agents
+.config
+.replit
+.replitignore
+attached_assets
+
+# Local environment files
+.env.local
+.env.*.local

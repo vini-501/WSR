@@ -20,11 +20,15 @@ export interface Report {
   week_start: Date;
   achievements: string;
   completed_tasks: string;
+  ongoing_tasks: string;
   /** @nullable */
   blockers?: string | null;
   next_week_plans: string;
   /** @nullable */
+  support_needed?: string | null;
+  /** @nullable */
   additional_notes?: string | null;
+  overall_progress: number;
   status: ReportStatus;
   /** @nullable */
   reviewer_id?: string | null;

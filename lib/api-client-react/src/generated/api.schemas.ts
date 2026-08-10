@@ -31,6 +31,7 @@ export const UserProfileStatus = {
   active: 'active',
   inactive: 'inactive',
   on_leave: 'on_leave',
+  resigned: 'resigned',
 } as const;
 
 export interface UserProfile {
@@ -51,6 +52,16 @@ export interface UserProfile {
   status: UserProfileStatus;
   /** @nullable */
   joining_date?: string | null;
+  /** @nullable */
+  designation?: string | null;
+  /** @nullable */
+  employment_type?: string | null;
+  /** @nullable */
+  timezone?: string | null;
+  /** @nullable */
+  work_location?: string | null;
+  /** @nullable */
+  weekly_reporting_frequency?: number | null;
   created_at: string;
 }
 
@@ -246,6 +257,7 @@ export const EmployeeStatus = {
   active: 'active',
   inactive: 'inactive',
   on_leave: 'on_leave',
+  resigned: 'resigned',
 } as const;
 
 export interface Employee {
@@ -271,6 +283,16 @@ export interface Employee {
   status: EmployeeStatus;
   /** @nullable */
   joining_date?: string | null;
+  /** @nullable */
+  designation?: string | null;
+  /** @nullable */
+  employment_type?: string | null;
+  /** @nullable */
+  timezone?: string | null;
+  /** @nullable */
+  work_location?: string | null;
+  /** @nullable */
+  weekly_reporting_frequency?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -300,6 +322,7 @@ export const EmployeeInputStatus = {
   active: 'active',
   inactive: 'inactive',
   on_leave: 'on_leave',
+  resigned: 'resigned',
 } as const;
 
 export interface EmployeeInput {
@@ -313,6 +336,11 @@ export interface EmployeeInput {
   manager_id?: string;
   status?: EmployeeInputStatus;
   joining_date?: string;
+  designation?: string;
+  employment_type?: string;
+  timezone?: string;
+  work_location?: string;
+  weekly_reporting_frequency?: number;
   send_invite?: boolean;
 }
 
@@ -333,6 +361,7 @@ export const EmployeeUpdateStatus = {
   active: 'active',
   inactive: 'inactive',
   on_leave: 'on_leave',
+  resigned: 'resigned',
 } as const;
 
 export interface EmployeeUpdate {
@@ -345,6 +374,11 @@ export interface EmployeeUpdate {
   manager_id?: string;
   status?: EmployeeUpdateStatus;
   joining_date?: string;
+  designation?: string;
+  employment_type?: string;
+  timezone?: string;
+  work_location?: string;
+  weekly_reporting_frequency?: number;
 }
 
 export type ReportStatus = typeof ReportStatus[keyof typeof ReportStatus];
@@ -353,6 +387,7 @@ export type ReportStatus = typeof ReportStatus[keyof typeof ReportStatus];
 export const ReportStatus = {
   draft: 'draft',
   submitted: 'submitted',
+  under_review: 'under_review',
   approved: 'approved',
   rejected: 'rejected',
   needs_changes: 'needs_changes',
@@ -371,11 +406,15 @@ export interface Report {
   week_start: string;
   achievements: string;
   completed_tasks: string;
+  ongoing_tasks: string;
   /** @nullable */
   blockers?: string | null;
   next_week_plans: string;
   /** @nullable */
+  support_needed?: string | null;
+  /** @nullable */
   additional_notes?: string | null;
+  overall_progress: number;
   status: ReportStatus;
   /** @nullable */
   reviewer_id?: string | null;
@@ -405,10 +444,18 @@ export interface ReportInput {
   achievements: string;
   /** @minLength 1 */
   completed_tasks: string;
+  /** @minLength 1 */
+  ongoing_tasks: string;
   blockers?: string;
   /** @minLength 1 */
   next_week_plans: string;
+  support_needed?: string;
   additional_notes?: string;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  overall_progress?: number;
 }
 
 export interface ReportUpdate {
@@ -416,10 +463,18 @@ export interface ReportUpdate {
   achievements?: string;
   /** @minLength 1 */
   completed_tasks?: string;
+  /** @minLength 1 */
+  ongoing_tasks?: string;
   blockers?: string;
   /** @minLength 1 */
   next_week_plans?: string;
+  support_needed?: string;
   additional_notes?: string;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  overall_progress?: number;
 }
 
 export interface ApprovalAction {
@@ -660,6 +715,8 @@ search?: string;
 department_id?: string;
 role?: ListEmployeesRole;
 status?: ListEmployeesStatus;
+sortBy?: ListEmployeesSortBy;
+sortOrder?: ListEmployeesSortOrder;
 page?: number;
 limit?: number;
 };
@@ -681,7 +738,42 @@ export const ListEmployeesStatus = {
   active: 'active',
   inactive: 'inactive',
   on_leave: 'on_leave',
+  resigned: 'resigned',
 } as const;
+
+export type ListEmployeesSortBy = typeof ListEmployeesSortBy[keyof typeof ListEmployeesSortBy];
+
+
+export const ListEmployeesSortBy = {
+  name: 'name',
+  employee_id: 'employee_id',
+  role: 'role',
+  status: 'status',
+  joining_date: 'joining_date',
+  department_name: 'department_name',
+} as const;
+
+export type ListEmployeesSortOrder = typeof ListEmployeesSortOrder[keyof typeof ListEmployeesSortOrder];
+
+
+export const ListEmployeesSortOrder = {
+  asc: 'asc',
+  desc: 'desc',
+} as const;
+
+export type ImportEmployeesBody = {
+  csvData: string;
+};
+
+export type ImportEmployees200 = {
+  success: boolean;
+  count: number;
+  message: string;
+};
+
+export type DeleteEmployeeParams = {
+permanent?: boolean;
+};
 
 export type ListReportsParams = {
 search?: string;
@@ -699,6 +791,7 @@ export type ListReportsStatus = typeof ListReportsStatus[keyof typeof ListReport
 export const ListReportsStatus = {
   draft: 'draft',
   submitted: 'submitted',
+  under_review: 'under_review',
   approved: 'approved',
   rejected: 'rejected',
   needs_changes: 'needs_changes',

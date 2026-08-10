@@ -4,6 +4,7 @@ import {
   text,
   timestamp,
   pgEnum,
+  integer,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
@@ -11,6 +12,7 @@ import { z } from "zod/v4";
 export const reportStatusEnum = pgEnum("report_status", [
   "draft",
   "submitted",
+  "under_review",
   "approved",
   "rejected",
   "needs_changes",
@@ -23,9 +25,12 @@ export const weeklyReportsTable = pgTable("weekly_reports", {
   week_start: text("week_start").notNull(),   // ISO date string YYYY-MM-DD
   achievements: text("achievements").notNull(),
   completed_tasks: text("completed_tasks").notNull(),
+  ongoing_tasks: text("ongoing_tasks").notNull().default(""),
   blockers: text("blockers"),
   next_week_plans: text("next_week_plans").notNull(),
+  support_needed: text("support_needed"),
   additional_notes: text("additional_notes"),
+  overall_progress: integer("overall_progress").notNull().default(0),
   status: reportStatusEnum("status").notNull().default("draft"),
   reviewer_id: uuid("reviewer_id"),
   review_comment: text("review_comment"),

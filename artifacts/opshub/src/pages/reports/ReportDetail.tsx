@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "wouter";
-import { useGetReport, useApproveReport, useRejectReport, useRequestReportChanges } from "@workspace/api-client-react";
+import { useGetReport, useApproveReport, useRejectReport, useRequestReportChanges, useReviewReport } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,8 +29,25 @@ export function ReportDetail() {
   const approveReport = useApproveReport();
   const rejectReport = useRejectReport();
   const requestChanges = useRequestReportChanges();
+  const reviewReport = useReviewReport();
 
-  const isPending = approveReport.isPending || rejectReport.isPending || requestChanges.isPending;
+  const isPending = approveReport.isPending || rejectReport.isPending || requestChanges.isPending || reviewReport.isPending;
+
+  useEffect(() => {
+    if (
+      report &&
+      report.status === 'submitted' &&
+      (profile?.role === 'admin' || profile?.role === 'management' || profile?.role === 'department_head') &&
+      profile?.id !== report.employee_id
+    ) {
+      reviewReport.mutate({ id }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getGetReportQueryKey(id) });
+          queryClient.invalidateQueries({ queryKey: getListReportsQueryKey() });
+        }
+      });
+    }
+  }, [report?.status, profile?.role, id]);
 
   if (isLoading) {
     return (
@@ -44,7 +61,7 @@ export function ReportDetail() {
 
   if (!report) return <div>Report not found</div>;
 
-  const canReview = report.status === 'submitted' && (profile?.role === 'admin' || profile?.role === 'management' || profile?.role === 'department_head');
+  const canReview = ['submitted', 'under_review'].includes(report.status) && (profile?.role === 'admin' || profile?.role === 'management' || profile?.role === 'department_head');
 
   const handleReview = () => {
     if (!reviewAction) return;
@@ -72,7 +89,8 @@ export function ReportDetail() {
   const statusColors: any = {
     draft: 'outline',
     submitted: 'default',
-    approved: 'bg-emerald-500 hover:bg-emerald-600',
+    under_review: 'bg-blue-500 hover:bg-blue-600 text-white',
+    approved: 'bg-emerald-500 hover:bg-emerald-600 text-white',
     rejected: 'destructive',
     needs_changes: 'bg-amber-500 hover:bg-amber-600 text-white'
   };
@@ -88,7 +106,7 @@ export function ReportDetail() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
             Weekly Report
-            <Badge variant={report.status === 'draft' ? 'outline' : report.status === 'rejected' ? 'destructive' : 'default'} className={statusColors[report.status] || ''}>
+            <Badge className={statusColors[report.status] || ''}>
               {report.status.replace('_', ' ')}
             </Badge>
           </h1>
@@ -116,7 +134,7 @@ export function ReportDetail() {
         )}
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-4">
         <Card>
           <CardContent className="p-6 flex items-center gap-4">
             <div className="p-3 bg-primary/10 text-primary rounded-lg"><User className="h-6 w-6" /></div>
@@ -144,6 +162,20 @@ export function ReportDetail() {
             </div>
           </CardContent>
         </Card>
+        <Card>
+          <CardContent className="p-6 flex flex-col justify-center">
+            <div className="flex justify-between items-center mb-2">
+              <p className="text-sm font-medium text-muted-foreground">Overall Progress</p>
+              <p className="font-bold text-primary">{report.overall_progress ?? 0}%</p>
+            </div>
+            <div className="w-full bg-secondary rounded-full h-2">
+              <div 
+                className="bg-primary h-2 rounded-full transition-all" 
+                style={{ width: `${report.overall_progress ?? 0}%` }}
+              />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {report.review_comment && (
@@ -168,16 +200,22 @@ export function ReportDetail() {
             <div className="whitespace-pre-wrap bg-muted/30 p-4 rounded-lg text-sm border">{report.achievements}</div>
           </div>
           
-          <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Completed Tasks</h3>
-            <div className="whitespace-pre-wrap bg-muted/30 p-4 rounded-lg text-sm border">{report.completed_tasks}</div>
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Completed Tasks</h3>
+              <div className="whitespace-pre-wrap bg-muted/30 p-4 rounded-lg text-sm border min-h-[100px]">{report.completed_tasks}</div>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Ongoing Tasks</h3>
+              <div className="whitespace-pre-wrap bg-muted/30 p-4 rounded-lg text-sm border min-h-[100px]">{report.ongoing_tasks}</div>
+            </div>
           </div>
           
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
               <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Blockers</h3>
               <div className="whitespace-pre-wrap bg-muted/30 p-4 rounded-lg text-sm border min-h-[100px]">
-                {report.blockers || <span className="text-muted-foreground italic">None reported.</span>}
+                {report.blockers || <span className="text-muted-foreground italic text-xs">None reported.</span>}
               </div>
             </div>
             <div>
@@ -186,12 +224,20 @@ export function ReportDetail() {
             </div>
           </div>
           
-          {report.additional_notes && (
+          <div className="grid gap-6 sm:grid-cols-2">
             <div>
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Additional Notes</h3>
-              <div className="bg-muted/30 p-4 rounded-lg text-sm border">{report.additional_notes}</div>
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Support Needed</h3>
+              <div className="whitespace-pre-wrap bg-muted/30 p-4 rounded-lg text-sm border min-h-[100px]">
+                {report.support_needed || <span className="text-muted-foreground italic text-xs">No support requested.</span>}
+              </div>
             </div>
-          )}
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Additional Notes / Comments</h3>
+              <div className="whitespace-pre-wrap bg-muted/30 p-4 rounded-lg text-sm border min-h-[100px]">
+                {report.additional_notes || <span className="text-muted-foreground italic text-xs">No additional comments.</span>}
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

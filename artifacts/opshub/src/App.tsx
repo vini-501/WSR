@@ -9,6 +9,7 @@ import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 // Pages
 import { Login } from '@/pages/auth/Login';
 import { ForgotPassword } from '@/pages/auth/ForgotPassword';
+import { ResetPassword } from '@/pages/auth/ResetPassword';
 import { Profile } from '@/pages/auth/Profile';
 import { Dashboard } from '@/pages/dashboard/Dashboard';
 import { DepartmentsList } from '@/pages/departments/DepartmentsList';
@@ -24,6 +25,12 @@ import { Notifications } from '@/pages/notifications/Notifications';
 import { ActivityLogs } from '@/pages/logs/ActivityLogs';
 import { AuditLogs } from '@/pages/logs/AuditLogs';
 import { Settings } from '@/pages/settings/Settings';
+import { EmailSettings } from '@/pages/settings/EmailSettings';
+import { EmailLogs } from '@/pages/logs/EmailLogs';
+import { AiInsights } from '@/pages/analytics/AiInsights';
+import { AiSettings } from '@/pages/settings/AiSettings';
+import { WorkflowDashboard } from '@/pages/automations/WorkflowDashboard';
+import { WorkflowLogs } from '@/pages/automations/WorkflowLogs';
 import NotFound from '@/pages/not-found';
 
 const queryClient = new QueryClient({
@@ -40,6 +47,7 @@ function Router() {
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/forgot-password" component={ForgotPassword} />
+      <Route path="/reset-password" component={ResetPassword} />
       
       <Route path="/">
         <Redirect to="/dashboard" />
@@ -117,6 +125,12 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
+      <Route path="/ai-insights">
+        <ProtectedRoute allowedRoles={['admin', 'management', 'department_head']}>
+          <AiInsights />
+        </ProtectedRoute>
+      </Route>
+
       <Route path="/notifications">
         <ProtectedRoute>
           <Notifications />
@@ -138,6 +152,36 @@ function Router() {
       <Route path="/settings">
         <ProtectedRoute allowedRoles={['admin']}>
           <Settings />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/settings/email">
+        <ProtectedRoute allowedRoles={['admin', 'management']}>
+          <EmailSettings />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/settings/ai">
+        <ProtectedRoute allowedRoles={['admin', 'management']}>
+          <AiSettings />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/email-logs">
+        <ProtectedRoute allowedRoles={['admin', 'management']}>
+          <EmailLogs />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/automations">
+        <ProtectedRoute allowedRoles={['admin', 'management']}>
+          <WorkflowDashboard />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/automations/logs">
+        <ProtectedRoute allowedRoles={['admin', 'management']}>
+          <WorkflowLogs />
         </ProtectedRoute>
       </Route>
 

@@ -1,5 +1,8 @@
+process.env.NODE_ENV = process.env.NODE_ENV || "development";
 import app from "./app";
 import { logger } from "./lib/logger";
+import { ensureSupabaseAuthUsers } from "./utils/seedAuth";
+import { seedComprehensiveEnterpriseData } from "./utils/seedComprehensiveData";
 
 const rawPort = process.env["PORT"];
 
@@ -22,4 +25,10 @@ app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
+  
+  ensureSupabaseAuthUsers()
+    .then(() => seedComprehensiveEnterpriseData())
+    .catch((err) => {
+      logger.error({ err }, "Error in data seeding startup tasks");
+    });
 });

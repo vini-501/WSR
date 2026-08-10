@@ -18,4 +18,9 @@ export interface EmployeeUpdate {
   manager_id?: string;
   status?: EmployeeUpdateStatus;
   joining_date?: Date;
+  designation?: string;
+  employment_type?: string;
+  timezone?: string;
+  work_location?: string;
+  weekly_reporting_frequency?: number;
 }

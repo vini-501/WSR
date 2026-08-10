@@ -31,6 +31,16 @@ export interface Employee {
   status: EmployeeStatus;
   /** @nullable */
   joining_date?: string | null;
+  /** @nullable */
+  designation?: string | null;
+  /** @nullable */
+  employment_type?: string | null;
+  /** @nullable */
+  timezone?: string | null;
+  /** @nullable */
+  work_location?: string | null;
+  /** @nullable */
+  weekly_reporting_frequency?: number | null;
   created_at: string;
   updated_at: string;
 }
