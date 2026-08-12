@@ -22,8 +22,12 @@
       "handle": "filesystem"
     },
     {
+      "src": "/assets/(.*)",
+      "dest": "/artifacts/opshub/assets/$1"
+    },
+    {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "/artifacts/opshub/index.html"
     }
   ]
 }
